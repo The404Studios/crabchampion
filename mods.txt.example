@@ -1,0 +1,21 @@
+; Crab Champions Editor - UE4SS Mods Configuration
+; Copy this content to your Mods/mods.txt file
+; 1 = enabled, 0 = disabled
+
+; ========================
+; BUILT-IN UE4SS MODS
+; ========================
+CheatManagerEnablerMod : 1
+ActorDumperMod : 0
+ConsoleCommandsMod : 0
+ConsoleEnablerMod : 1
+SplitScreenMod : 0
+LineTraceMod : 0
+BPModLoaderMod : 1
+BPML_GenericFunctions : 1
+jsbLuaProfilerMod : 0
+
+; ========================
+; CRAB CHAMPIONS EDITOR
+; ========================
+CrabChampionsEditor : 1
