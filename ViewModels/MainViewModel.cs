@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -12,14 +13,15 @@ using UnrealSavEditor.Models;
 namespace UnrealSavEditor.ViewModels
 {
     /// <summary>
-    /// Main ViewModel for the SAV Editor
+    /// Main ViewModel for the Crab Champions SAV Editor
     /// </summary>
     public partial class MainViewModel : ViewModelBase
     {
         private GvasFile? _currentFile;
+        private CrabChampionsSave? _crabSave;
 
         [ObservableProperty]
-        private string _windowTitle = "Unreal SAV Editor";
+        private string _windowTitle = "Crab Champions Save Editor";
 
         [ObservableProperty]
         private string _fileName = "No file loaded";
@@ -52,7 +54,7 @@ namespace UnrealSavEditor.ViewModels
         private PropertyTreeItemViewModel? _selectedProperty;
 
         [ObservableProperty]
-        private string _statusMessage = "Ready";
+        private string _statusMessage = "Ready - Open SaveSlot.sav from Crab Champions";
 
         [ObservableProperty]
         private bool _isLoading;
@@ -69,13 +71,53 @@ namespace UnrealSavEditor.ViewModels
         [ObservableProperty]
         private bool _canEditValue;
 
+        [ObservableProperty]
+        private bool _isCrabChampionsSave;
+
+        [ObservableProperty]
+        private string _defaultSavePath = string.Empty;
+
+        [ObservableProperty]
+        private bool _defaultSaveExists;
+
+        [ObservableProperty]
+        private string _compressionType = "None";
+
+        // Quick edit values for Crab Champions
+        [ObservableProperty]
+        private string _quickCrystals = "0";
+
+        [ObservableProperty]
+        private string _quickKeys = "0";
+
+        [ObservableProperty]
+        private string _quickHealth = "0";
+
+        [ObservableProperty]
+        private string _quickDamage = "0";
+
+        [ObservableProperty]
+        private string _quickSpeed = "0";
+
+        [ObservableProperty]
+        private string _quickLevel = "0";
+
         public ObservableCollection<PropertyTreeItemViewModel> Properties { get; } = new();
         public ObservableCollection<PropertyTreeItemViewModel> FilteredProperties { get; } = new();
         public ObservableCollection<RecentFileViewModel> RecentFiles { get; } = new();
+        public ObservableCollection<EditableValueViewModel> QuickEditValues { get; } = new();
+        public ObservableCollection<CategoryViewModel> Categories { get; } = new();
 
         public MainViewModel()
         {
             LoadRecentFiles();
+            CheckDefaultSavePath();
+        }
+
+        private void CheckDefaultSavePath()
+        {
+            DefaultSavePath = CrabChampionsSave.GetDefaultSavePath();
+            DefaultSaveExists = File.Exists(DefaultSavePath);
         }
 
         partial void OnSearchTextChanged(string value)
@@ -136,7 +178,6 @@ namespace UnrealSavEditor.ViewModels
             {
                 sb.Append($"{i:X8}  ");
 
-                // Hex bytes
                 for (int j = 0; j < 16; j++)
                 {
                     if (i + j < data.Length)
@@ -149,7 +190,6 @@ namespace UnrealSavEditor.ViewModels
 
                 sb.Append(" |");
 
-                // ASCII representation
                 for (int j = 0; j < 16 && i + j < data.Length; j++)
                 {
                     var b = data[i + j];
@@ -163,13 +203,31 @@ namespace UnrealSavEditor.ViewModels
         }
 
         [RelayCommand]
+        private async Task OpenDefaultSaveAsync()
+        {
+            if (DefaultSaveExists)
+            {
+                await LoadFileAsync(DefaultSavePath);
+            }
+            else
+            {
+                MessageBox.Show(
+                    $"Crab Champions save file not found at:\n{DefaultSavePath}\n\nMake sure you have played the game at least once.",
+                    "Save File Not Found",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
+        [RelayCommand]
         private async Task OpenFileAsync()
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Open Save File",
+                Title = "Open Crab Champions Save File",
                 Filter = "Save Files (*.sav)|*.sav|All Files (*.*)|*.*",
-                DefaultExt = ".sav"
+                DefaultExt = ".sav",
+                InitialDirectory = Path.GetDirectoryName(DefaultSavePath)
             };
 
             if (dialog.ShowDialog() == true)
@@ -188,10 +246,17 @@ namespace UnrealSavEditor.ViewModels
                 IsLoading = true;
                 StatusMessage = "Saving file...";
 
+                // Create automatic backup before saving
+                var backupPath = $"{_currentFile.FilePath}.backup";
+                if (File.Exists(_currentFile.FilePath))
+                {
+                    File.Copy(_currentFile.FilePath, backupPath, true);
+                }
+
                 await Task.Run(() => _currentFile.Save());
 
                 HasUnsavedChanges = false;
-                StatusMessage = "File saved successfully!";
+                StatusMessage = "File saved successfully! Backup created.";
             }
             catch (Exception ex)
             {
@@ -229,7 +294,7 @@ namespace UnrealSavEditor.ViewModels
                     _currentFile.FilePath = dialog.FileName;
                     FilePath = dialog.FileName;
                     FileName = Path.GetFileName(dialog.FileName);
-                    WindowTitle = $"Unreal SAV Editor - {FileName}";
+                    WindowTitle = $"Crab Champions Save Editor - {FileName}";
                     HasUnsavedChanges = false;
                     StatusMessage = "File saved successfully!";
                     AddToRecentFiles(dialog.FileName);
@@ -312,18 +377,59 @@ namespace UnrealSavEditor.ViewModels
                         break;
                 }
 
-                // Update the tree item display
-                SelectedProperty = new PropertyTreeItemViewModel(property);
                 HasUnsavedChanges = true;
-                StatusMessage = "Property value updated";
-
-                // Refresh the tree
+                StatusMessage = $"Updated {property.Name}";
                 RefreshTree();
+                UpdateQuickEditValues();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Invalid value: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        [RelayCommand]
+        private void ApplyQuickEdit(EditableValueViewModel? value)
+        {
+            if (value?.Property == null) return;
+
+            try
+            {
+                switch (value.Property)
+                {
+                    case IntProperty ip:
+                        ip.Value = (int)value.CurrentValue;
+                        break;
+                    case UInt32Property up:
+                        up.Value = (uint)value.CurrentValue;
+                        break;
+                    case Int64Property lp:
+                        lp.Value = (long)value.CurrentValue;
+                        break;
+                    case FloatProperty fp:
+                        fp.Value = (float)value.CurrentValue;
+                        break;
+                    case DoubleProperty dp:
+                        dp.Value = value.CurrentValue;
+                        break;
+                }
+
+                HasUnsavedChanges = true;
+                StatusMessage = $"Updated {value.DisplayName} to {value.CurrentValue:N0}";
+                RefreshTree();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating value: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        [RelayCommand]
+        private void MaxOutValue(EditableValueViewModel? value)
+        {
+            if (value == null) return;
+            value.CurrentValue = 999999;
+            ApplyQuickEdit(value);
         }
 
         [RelayCommand]
@@ -368,13 +474,25 @@ namespace UnrealSavEditor.ViewModels
             }
         }
 
+        [RelayCommand]
+        private void OpenSaveFolder()
+        {
+            var folder = Path.GetDirectoryName(DefaultSavePath);
+            if (Directory.Exists(folder))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", folder);
+            }
+        }
+
         private async Task LoadFileAsync(string path)
         {
             try
             {
                 IsLoading = true;
-                StatusMessage = "Loading file...";
+                StatusMessage = "Loading save file...";
                 Properties.Clear();
+                QuickEditValues.Clear();
+                Categories.Clear();
 
                 await Task.Run(() =>
                 {
@@ -385,13 +503,18 @@ namespace UnrealSavEditor.ViewModels
                 {
                     FilePath = path;
                     FileName = Path.GetFileName(path);
-                    WindowTitle = $"Unreal SAV Editor - {FileName}";
+                    WindowTitle = $"Crab Champions Save Editor - {FileName}";
                     FileSize = FormatFileSize(new FileInfo(path).Length);
                     EngineVersion = _currentFile.EngineVersion.ToString();
                     SaveGameClass = _currentFile.SaveGameClassName;
-                    PropertyCount = _currentFile.Properties.Count;
+                    PropertyCount = CountAllProperties(_currentFile.Properties);
                     HasFile = true;
                     HasUnsavedChanges = false;
+
+                    // Create Crab Champions wrapper
+                    _crabSave = new CrabChampionsSave(_currentFile);
+                    IsCrabChampionsSave = CrabChampionsSave.IsCrabChampionsSave(_currentFile);
+                    CompressionType = _currentFile.OriginalCompression.ToString();
 
                     // Populate tree
                     foreach (var prop in _currentFile.Properties)
@@ -399,9 +522,24 @@ namespace UnrealSavEditor.ViewModels
                         Properties.Add(new PropertyTreeItemViewModel(prop));
                     }
 
+                    // Populate categories
+                    var categories = _crabSave.CategorizeProperties();
+                    foreach (var category in categories.Where(c => c.Value.Count > 0))
+                    {
+                        Categories.Add(new CategoryViewModel
+                        {
+                            Name = category.Key,
+                            Properties = new ObservableCollection<PropertyTreeItemViewModel>(
+                                category.Value.Select(p => new PropertyTreeItemViewModel(p)))
+                        });
+                    }
+
+                    // Populate quick edit values
+                    UpdateQuickEditValues();
+
                     ApplyFilter();
                     AddToRecentFiles(path);
-                    StatusMessage = $"Loaded {PropertyCount} properties";
+                    StatusMessage = $"Loaded {PropertyCount} properties" + (IsCrabChampionsSave ? " (Crab Champions detected)" : "");
                 }
             }
             catch (Exception ex)
@@ -414,6 +552,110 @@ namespace UnrealSavEditor.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private int CountAllProperties(List<GvasProperty> properties)
+        {
+            int count = properties.Count;
+            foreach (var prop in properties)
+            {
+                if (prop is StructProperty sp)
+                    count += CountAllProperties(sp.Properties);
+                if (prop is ArrayProperty ap)
+                {
+                    foreach (var item in ap.Items.OfType<StructProperty>())
+                        count += CountAllProperties(item.Properties);
+                }
+            }
+            return count;
+        }
+
+        private void UpdateQuickEditValues()
+        {
+            QuickEditValues.Clear();
+
+            if (_crabSave == null) return;
+
+            var editableValues = _crabSave.GetEditableValues();
+            foreach (var val in editableValues)
+            {
+                QuickEditValues.Add(new EditableValueViewModel
+                {
+                    Property = val.Property,
+                    DisplayName = val.DisplayName,
+                    Icon = val.Icon,
+                    Category = val.Category,
+                    CurrentValue = val.CurrentValue
+                });
+            }
+
+            // Add all numeric properties that weren't found by name
+            AddAllNumericProperties(_currentFile?.Properties ?? new List<GvasProperty>());
+        }
+
+        private void AddAllNumericProperties(List<GvasProperty> properties, string prefix = "")
+        {
+            foreach (var prop in properties)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+
+                if (IsNumericProperty(prop) && !QuickEditValues.Any(v => v.Property == prop))
+                {
+                    QuickEditValues.Add(new EditableValueViewModel
+                    {
+                        Property = prop,
+                        DisplayName = prop.Name,
+                        Icon = GetIconForProperty(prop),
+                        Category = "Other Values",
+                        CurrentValue = GetNumericValue(prop)
+                    });
+                }
+
+                if (prop is StructProperty sp)
+                {
+                    AddAllNumericProperties(sp.Properties, fullName);
+                }
+            }
+        }
+
+        private bool IsNumericProperty(GvasProperty prop)
+        {
+            return prop is IntProperty or UInt32Property or Int64Property or UInt64Property
+                or FloatProperty or DoubleProperty;
+        }
+
+        private double GetNumericValue(GvasProperty prop)
+        {
+            return prop switch
+            {
+                IntProperty ip => ip.Value,
+                UInt32Property up => up.Value,
+                Int64Property lp => lp.Value,
+                UInt64Property ulp => ulp.Value,
+                FloatProperty fp => fp.Value,
+                DoubleProperty dp => dp.Value,
+                _ => 0
+            };
+        }
+
+        private string GetIconForProperty(GvasProperty prop)
+        {
+            var name = prop.Name.ToLowerInvariant();
+            if (name.Contains("crystal") || name.Contains("coin") || name.Contains("gold"))
+                return "💎";
+            if (name.Contains("key"))
+                return "🔑";
+            if (name.Contains("health") || name.Contains("hp"))
+                return "❤️";
+            if (name.Contains("damage") || name.Contains("attack"))
+                return "⚔️";
+            if (name.Contains("speed"))
+                return "👟";
+            if (name.Contains("level") || name.Contains("xp"))
+                return "⭐";
+            if (name.Contains("crit"))
+                return "🎯";
+            return "📊";
         }
 
         private void RefreshTree()
@@ -479,7 +721,7 @@ namespace UnrealSavEditor.ViewModels
             try
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var settingsPath = Path.Combine(appData, "UnrealSavEditor", "recent.txt");
+                var settingsPath = Path.Combine(appData, "CrabChampionsSaveEditor", "recent.txt");
 
                 if (File.Exists(settingsPath))
                 {
@@ -506,7 +748,7 @@ namespace UnrealSavEditor.ViewModels
             try
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var settingsDir = Path.Combine(appData, "UnrealSavEditor");
+                var settingsDir = Path.Combine(appData, "CrabChampionsSaveEditor");
                 Directory.CreateDirectory(settingsDir);
                 var settingsPath = Path.Combine(settingsDir, "recent.txt");
                 File.WriteAllLines(settingsPath, RecentFiles.Select(f => f.FilePath));
@@ -533,5 +775,22 @@ namespace UnrealSavEditor.ViewModels
         public string FilePath { get; set; } = string.Empty;
         public string FileName { get; set; } = string.Empty;
         public DateTime LastOpened { get; set; }
+    }
+
+    public partial class EditableValueViewModel : ObservableObject
+    {
+        public GvasProperty Property { get; set; } = null!;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        private double _currentValue;
+    }
+
+    public class CategoryViewModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public ObservableCollection<PropertyTreeItemViewModel> Properties { get; set; } = new();
     }
 }
