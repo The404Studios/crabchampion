@@ -1,0 +1,456 @@
+<Window x:Class="UnrealSavEditor.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UnrealSavEditor.ViewModels"
+        xmlns:converters="clr-namespace:UnrealSavEditor.Converters"
+        Title="{Binding WindowTitle}"
+        Height="800" Width="1400"
+        MinHeight="600" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundDarkBrush}">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <converters:StringToBrushConverter x:Key="StringToBrush"/>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveFileCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveFileAsCommand}"/>
+        <KeyBinding Key="F" Modifiers="Ctrl" Command="{Binding ClearSearchCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Bar -->
+        <Border Grid.Row="0" Background="{StaticResource HeaderGradientBrush}" Padding="20,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo and Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="40" Height="40" CornerRadius="10" Background="{StaticResource PrimaryGradientBrush}" Margin="0,0,16,0">
+                        <TextBlock Text="⚙" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Unreal SAV Editor" Style="{StaticResource H2Style}" Margin="0,0,0,2"/>
+                        <TextBlock Text="Edit Unreal Engine save files with ease" Style="{StaticResource CaptionStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open File" Style="{StaticResource ModernButtonStyle}" Command="{Binding OpenFileCommand}" Margin="0,0,12,0">
+                        <Button.ToolTip>
+                            <ToolTip Style="{StaticResource ModernToolTipStyle}" Content="Open a .sav file (Ctrl+O)"/>
+                        </Button.ToolTip>
+                    </Button>
+                    <Button Content="Save" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SaveFileCommand}" IsEnabled="{Binding HasFile}" Margin="0,0,12,0">
+                        <Button.ToolTip>
+                            <ToolTip Style="{StaticResource ModernToolTipStyle}" Content="Save changes (Ctrl+S)"/>
+                        </Button.ToolTip>
+                    </Button>
+                    <Button Content="Save As" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SaveFileAsCommand}" IsEnabled="{Binding HasFile}" Margin="0,0,12,0"/>
+                    <Button Content="Backup" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CreateBackupCommand}" IsEnabled="{Binding HasFile}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="350" MinWidth="280"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel - Tree View -->
+            <Border Grid.Column="0" Style="{StaticResource SidebarStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Search Box -->
+                    <Border Grid.Row="0" Padding="16">
+                        <Grid>
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource SearchTextBoxStyle}"
+                                     x:Name="SearchBox"/>
+                            <TextBlock Text="🔍" FontSize="16"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       IsHitTestVisible="False"/>
+                            <Button Style="{StaticResource IconButtonStyle}"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding ClearSearchCommand}"
+                                    Visibility="{Binding SearchText.Length, Converter={StaticResource BoolToVisibility}}"
+                                    Content="✕" FontSize="12"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Tree Actions -->
+                    <Border Grid.Row="1" Padding="16,0,16,8">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Expand All" Style="{StaticResource IconButtonStyle}"
+                                    Command="{Binding ExpandAllCommand}" Padding="8,4" FontSize="12"
+                                    Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Button Content="Collapse All" Style="{StaticResource IconButtonStyle}"
+                                    Command="{Binding CollapseAllCommand}" Padding="8,4" FontSize="12"
+                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Property Tree -->
+                    <ScrollViewer Grid.Row="2" Style="{StaticResource ModernScrollViewerStyle}" Padding="8,0">
+                        <TreeView ItemsSource="{Binding FilteredProperties}"
+                                  Style="{StaticResource ModernTreeViewStyle}"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                  SelectedItemChanged="TreeView_SelectedItemChanged">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource ModernTreeViewItemStyle}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <Grid Margin="4,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+
+                                        <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStyle}" FontWeight="Medium"/>
+                                            <TextBlock Text="{Binding DisplayValue}" Style="{StaticResource CaptionStyle}"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="200"/>
+                                        </StackPanel>
+
+                                        <Border Grid.Column="2" Background="{Binding TypeColor, Converter={StaticResource StringToBrush}}"
+                                                CornerRadius="4" Padding="6,2" Margin="8,0,0,0" Opacity="0.2">
+                                            <TextBlock Text="{Binding TypeName}" FontSize="10"
+                                                       Foreground="{Binding TypeColor, Converter={StaticResource StringToBrush}}"/>
+                                        </Border>
+                                    </Grid>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+
+                    <!-- Empty State -->
+                    <Border Grid.Row="2" Visibility="{Binding HasFile, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                            <TextBlock Text="📂" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                            <TextBlock Text="No file loaded" Style="{StaticResource H3Style}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Open a .sav file to get started" Style="{StaticResource CaptionStyle}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+
+                            <!-- Recent Files -->
+                            <ItemsControl ItemsSource="{Binding RecentFiles}" Margin="0,24,0,0" Visibility="{Binding RecentFiles.Count, Converter={StaticResource BoolToVisibility}}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource IconButtonStyle}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Command="{Binding DataContext.OpenRecentFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding FilePath}"
+                                                Margin="0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="📄" Margin="0,0,8,0"/>
+                                                <TextBlock Text="{Binding FileName}" Style="{StaticResource BodyStyle}"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="1" Background="{StaticResource BorderBrush}"
+                          HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+
+            <!-- Right Panel - Details & Editor -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- File Info Header -->
+                <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}" Padding="24,16"
+                        Visibility="{Binding HasFile, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- File Name -->
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="FILE" Style="{StaticResource CaptionStyle}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding FileName}" Style="{StaticResource BodyStyle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <!-- File Size -->
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <TextBlock Text="SIZE" Style="{StaticResource CaptionStyle}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding FileSize}" Style="{StaticResource BodyStyle}" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <!-- Engine Version -->
+                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                            <TextBlock Text="ENGINE" Style="{StaticResource CaptionStyle}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding EngineVersion}" Style="{StaticResource BodyStyle}" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <!-- Properties Count -->
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="PROPERTIES" Style="{StaticResource CaptionStyle}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding PropertyCount}" Style="{StaticResource BodyStyle}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Tab Control for Editor/Hex View -->
+                <TabControl Grid.Row="1" Style="{StaticResource ModernTabControlStyle}"
+                            SelectedIndex="{Binding SelectedTabIndex}"
+                            Background="Transparent" Padding="24">
+
+                    <!-- Property Editor Tab -->
+                    <TabItem Header="Property Editor" Style="{StaticResource ModernTabItemStyle}">
+                        <ScrollViewer Style="{StaticResource ModernScrollViewerStyle}" Padding="0,16">
+                            <Grid>
+                                <!-- Editor Content -->
+                                <Border Style="{StaticResource CardStyle}" Visibility="{Binding CanEditValue, Converter={StaticResource BoolToVisibility}}"
+                                        VerticalAlignment="Top">
+                                    <StackPanel>
+                                        <TextBlock Text="Edit Property Value" Style="{StaticResource H3Style}" Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProperty.Name}" Style="{StaticResource BodyStyle}" VerticalAlignment="Center" Margin="0,0,0,12"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProperty.TypeName}" Style="{StaticResource BodyStyle}" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,0,12"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Value:" Style="{StaticResource CaptionStyle}" VerticalAlignment="Center" Margin="0,0,0,16"/>
+                                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EditValue, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,16"/>
+
+                                            <Button Grid.Row="3" Grid.Column="1" Content="Apply Changes"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    Command="{Binding ApplyEditCommand}"
+                                                    HorizontalAlignment="Left"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- No Selection State -->
+                                <Border Visibility="{Binding CanEditValue, Converter={StaticResource InverseBoolToVisibility}}"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="✏️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                        <TextBlock Text="Select a property to edit" Style="{StaticResource H3Style}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Choose an editable property from the tree on the left" Style="{StaticResource CaptionStyle}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Hex View Tab -->
+                    <TabItem Header="Hex Viewer" Style="{StaticResource ModernTabItemStyle}">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Raw Data View" Style="{StaticResource H3Style}" Margin="0,0,0,16"/>
+
+                                <ScrollViewer Grid.Row="1" Style="{StaticResource ModernScrollViewerStyle}"
+                                              HorizontalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding HexViewContent}"
+                                               Style="{StaticResource MonospaceStyle}"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               TextWrapping="NoWrap"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+
+                    <!-- Info Tab -->
+                    <TabItem Header="File Info" Style="{StaticResource ModernTabItemStyle}">
+                        <ScrollViewer Style="{StaticResource ModernScrollViewerStyle}" Padding="0,16">
+                            <StackPanel>
+                                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Save Game Information" Style="{StaticResource H3Style}" Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="File Path:" Style="{StaticResource CaptionStyle}" Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FilePath}" Style="{StaticResource BodyStyle}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Save Class:" Style="{StaticResource CaptionStyle}" Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SaveGameClass}" Style="{StaticResource BodyStyle}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Engine Version:" Style="{StaticResource CaptionStyle}" Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EngineVersion}" Style="{StaticResource BodyStyle}" Margin="0,0,0,12"/>
+
+                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Total Properties:" Style="{StaticResource CaptionStyle}"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding PropertyCount}" Style="{StaticResource BodyStyle}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource CardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource H3Style}" Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Ctrl + O" Style="{StaticResource BodyStyle}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Open file" Style="{StaticResource CaptionStyle}" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl + S" Style="{StaticResource BodyStyle}" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Save file" Style="{StaticResource CaptionStyle}" Margin="0,0,0,8"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl + Shift + S" Style="{StaticResource BodyStyle}" Foreground="{StaticResource AccentBrush}"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Save file as" Style="{StaticResource CaptionStyle}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20,12" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource WarningBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource CaptionStyle}"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Style="{StaticResource CaptionStyle}" Margin="0,0,24,0"
+                           Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BoolToVisibility}}">
+                    <Run Text="●" Foreground="{StaticResource WarningBrush}"/>
+                    <Run Text="Unsaved changes"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="2" Text="Unreal SAV Editor v1.0" Style="{StaticResource CaptionStyle}"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="3" Background="#CC0F172A"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border Width="60" Height="60" CornerRadius="30" Background="{StaticResource PrimaryBrush}" Margin="0,0,0,16">
+                    <Border.RenderTransform>
+                        <RotateTransform x:Name="LoadingRotation"/>
+                    </Border.RenderTransform>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="LoadingRotation"
+                                                     Storyboard.TargetProperty="Angle"
+                                                     From="0" To="360"
+                                                     Duration="0:0:1"
+                                                     RepeatBehavior="Forever"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
+                    <TextBlock Text="⚙" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                </Border>
+                <TextBlock Text="Loading..." Style="{StaticResource H3Style}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
