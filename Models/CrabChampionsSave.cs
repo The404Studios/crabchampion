@@ -646,110 +646,45 @@ namespace UnrealSavEditor.Models
         // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
-        // These methods properly add items to the game's unlock arrays.
-        // The game uses ObjectProperty arrays with asset paths like:
-        // /Game/Blueprint/Weapon/{Id}/DA_Weapon_{Id}.DA_Weapon_{Id}
+        // WARNING: Unlock methods are currently DISABLED because adding to arrays
+        // corrupts the save file. The game's asset path format is not fully understood.
+        // Only the prismatic feature works (modifies existing entries, doesn't add new ones).
 
         /// <summary>
-        /// Check if an array already contains a path (case-insensitive check)
-        /// </summary>
-        private bool ArrayContainsPath(ArrayProperty ap, string path)
-        {
-            var pathLower = path.ToLowerInvariant();
-            foreach (var item in ap.Items)
-            {
-                var itemStr = item?.ToString()?.ToLowerInvariant();
-                if (itemStr == pathLower)
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Unlock all primary weapons by adding to UnlockedWeapons array.
+        /// Unlock all primary weapons - DISABLED to prevent save corruption
         /// </summary>
         public int UnlockAllWeapons()
         {
-            int unlocked = 0;
-
-            // Find the UnlockedWeapons array
-            var unlockedProp = FindProperty("UnlockedWeapons", "unlockedweapons");
-
-            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
-            {
-                foreach (var weapon in CrabChampionsData.PrimaryWeapons)
-                {
-                    // Check if already unlocked
-                    if (!ArrayContainsPath(ap, weapon.AssetPath))
-                    {
-                        ap.Items.Add(weapon.AssetPath);
-                        unlocked++;
-                    }
-                }
-            }
-
-            return unlocked;
+            // DISABLED: Adding to arrays corrupts saves
+            // The game's expected asset path format is unknown
+            return 0;
         }
 
         /// <summary>
-        /// Unlock all secondary weapons/abilities by adding to UnlockedAbilities array.
+        /// Unlock all secondary weapons/abilities - DISABLED to prevent save corruption
         /// </summary>
         public int UnlockAllAbilities()
         {
-            int unlocked = 0;
-
-            // Find the UnlockedAbilities array
-            var unlockedProp = FindProperty("UnlockedAbilities", "unlockedabilities");
-
-            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
-            {
-                foreach (var ability in CrabChampionsData.SecondaryWeapons)
-                {
-                    if (!ArrayContainsPath(ap, ability.AssetPath))
-                    {
-                        ap.Items.Add(ability.AssetPath);
-                        unlocked++;
-                    }
-                }
-            }
-
-            return unlocked;
+            // DISABLED: Adding to arrays corrupts saves
+            return 0;
         }
 
         /// <summary>
-        /// Unlock all melee weapons by adding to UnlockedMeleeWeapons array.
+        /// Unlock all melee weapons - DISABLED to prevent save corruption
         /// </summary>
         public int UnlockAllMelee()
         {
-            int unlocked = 0;
-
-            // Find the UnlockedMeleeWeapons array
-            var unlockedProp = FindProperty("UnlockedMeleeWeapons", "unlockedmeleeweapons");
-
-            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
-            {
-                foreach (var melee in CrabChampionsData.MeleeWeapons)
-                {
-                    if (!ArrayContainsPath(ap, melee.AssetPath))
-                    {
-                        ap.Items.Add(melee.AssetPath);
-                        unlocked++;
-                    }
-                }
-            }
-
-            return unlocked;
+            // DISABLED: Adding to arrays corrupts saves
+            return 0;
         }
 
         /// <summary>
-        /// Unlock all items (weapons, abilities, melee) and optionally add to RankedWeapons
+        /// Unlock all items - DISABLED to prevent save corruption
         /// </summary>
         public (int weapons, int abilities, int melee) UnlockAll()
         {
-            var result = (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
-            // Also ensure items are in RankedWeapons array for ranks to work
-            EnsureAllInRankedWeapons();
-            return result;
+            // DISABLED: Adding to arrays corrupts saves
+            return (0, 0, 0);
         }
 
         /// <summary>
@@ -794,84 +729,6 @@ namespace UnrealSavEditor.Models
             if (rankedProp is ArrayProperty ap)
                 return ap.Items.Count;
             return 0;
-        }
-
-        /// <summary>
-        /// Ensure all known weapons are in the RankedWeapons array (needed for ranks to work)
-        /// </summary>
-        public int EnsureAllInRankedWeapons()
-        {
-            int added = 0;
-            var rankedProp = FindProperty("RankedWeapons", "rankedweapons");
-
-            if (rankedProp is not ArrayProperty ap || ap.InnerType != "StructProperty")
-                return 0;
-
-            // Get all existing weapon paths in RankedWeapons
-            var existingPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in ap.Items)
-            {
-                if (item is StructProperty sp)
-                {
-                    var weaponProp = sp.Properties.FirstOrDefault(p =>
-                        p.Name.Equals("Weapon", StringComparison.OrdinalIgnoreCase));
-                    if (weaponProp is ObjectProperty op)
-                        existingPaths.Add(op.Value);
-                    else if (weaponProp != null)
-                        existingPaths.Add(weaponProp.GetValue()?.ToString() ?? "");
-                }
-            }
-
-            // Add missing weapons
-            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
-            {
-                if (!existingPaths.Contains(weapon.AssetPath))
-                {
-                    AddToRankedWeapons(ap, weapon.AssetPath, "ECrabRank::Bronze");
-                    added++;
-                }
-            }
-
-            // Add missing abilities
-            foreach (var ability in CrabChampionsData.SecondaryWeapons)
-            {
-                if (!existingPaths.Contains(ability.AssetPath))
-                {
-                    AddToRankedWeapons(ap, ability.AssetPath, "ECrabRank::Bronze");
-                    added++;
-                }
-            }
-
-            // Add missing melee
-            foreach (var melee in CrabChampionsData.MeleeWeapons)
-            {
-                if (!existingPaths.Contains(melee.AssetPath))
-                {
-                    AddToRankedWeapons(ap, melee.AssetPath, "ECrabRank::Bronze");
-                    added++;
-                }
-            }
-
-            return added;
-        }
-
-        /// <summary>
-        /// Add a weapon to the RankedWeapons array with the given rank
-        /// </summary>
-        private void AddToRankedWeapons(ArrayProperty rankedArray, string weaponPath, string rank)
-        {
-            // Create a new struct property matching the RankedWeapons entry format
-            var structProp = new StructProperty
-            {
-                Name = "",
-                StructType = rankedArray.StructType ?? "",
-                Properties = new List<GvasProperty>
-                {
-                    new ObjectProperty { Name = "Weapon", Value = weaponPath },
-                    new EnumProperty { Name = "Rank", EnumType = "ECrabRank", Value = rank }
-                }
-            };
-            rankedArray.Items.Add(structProp);
         }
 
         /// <summary>
