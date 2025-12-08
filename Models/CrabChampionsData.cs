@@ -34,7 +34,8 @@ namespace UnrealSavEditor.Models
         };
 
         // ============================================
-        // PRIMARY WEAPONS (18 total)
+        // PRIMARY WEAPONS (20 total - from actual save file)
+        // Path format: /Game/Blueprint/Weapon/{Id}/DA_Weapon_{Id}.DA_Weapon_{Id}
         // ============================================
         public static readonly WeaponInfo[] PrimaryWeapons =
         {
@@ -42,47 +43,53 @@ namespace UnrealSavEditor.Models
             new("AutoRifle", "Auto Rifle", "Rifle", true),
             new("DualShotguns", "Dual Shotguns", "Shotgun", true),
 
-            // Unlockable weapons
-            new("Minigun", "Minigun", "LMG", false),
-            new("Sniper", "Sniper", "Sniper", false),
-            new("RocketLauncher", "Rocket Launcher", "Launcher", false),
-            new("Flamethrower", "Flamethrower", "Special", false),
-            new("AutoShotgun", "Auto Shotgun", "Shotgun", false),
-            new("PumpShotgun", "Pump Shotgun", "Shotgun", false),
+            // Unlockable weapons (IDs from actual save file)
             new("DualPistols", "Dual Pistols", "Pistol", false),
+            new("AutoShotgun", "Auto Shotgun", "Shotgun", false),
             new("BurstPistol", "Burst Pistol", "Pistol", false),
-            new("ShotgunPistol", "Shotgun Pistol", "Pistol", false),
-            new("SMG", "SMG", "SMG", false),
+            new("Sniper", "Sniper", "Sniper", false),
             new("Crossbow", "Crossbow", "Sniper", false),
-            new("BladeLauncher", "Blade Launcher", "Launcher", false),
             new("OrbLauncher", "Orb Launcher", "Launcher", false),
+            new("RocketLauncher", "Rocket Launcher", "Launcher", false),
+            new("Minigun", "Minigun", "LMG", false),
+            new("BladeLauncher", "Blade Launcher", "Launcher", false),
             new("ClusterLauncher", "Cluster Launcher", "Launcher", false),
-            new("Wand", "Wand", "Special", false),
+            new("Flamethrower", "Flamethrower", "Special", false),
+            new("ArcaneWand", "Arcane Wand", "Special", false),
+            new("LaserCannons", "Laser Cannons", "Special", false),
+            new("Seagle", "Seagle", "Rifle", false),
+            new("MarksmanRifle", "Marksman Rifle", "Rifle", false),
             new("IceStaff", "Ice Staff", "Special", false),
+            new("LightningScepter", "Lightning Scepter", "Special", false),
+            new("PoisonCannon", "Poison Cannon", "Special", false),
         };
 
         // ============================================
-        // SECONDARY WEAPONS / ABILITIES (5 total)
-        // Asset type is "Grenade" in game files
+        // ABILITIES (7 total - from actual save file)
+        // Path format: /Game/Blueprint/Ability/DA_Ability_{Id}.DA_Ability_{Id}
         // ============================================
         public static readonly WeaponInfo[] SecondaryWeapons =
         {
-            new("Grenade", "Grenade", "Explosive", true, "Grenade"),
-            new("GrapplingHook", "Grappling Hook", "Utility", false, "Grenade"),
-            new("LaserBeam", "Laser Beam", "Energy", false, "Grenade"),
-            new("ElectroGlobe", "Electro Globe", "Energy", false, "Grenade"),
-            new("Shockwave", "Shockwave", "Area", false, "Grenade"),
+            new("Grenade", "Grenade", "Explosive", true, "Ability"),
+            new("GrapplingHook", "Grappling Hook", "Utility", false, "Ability"),
+            new("BlackHole", "Black Hole", "Special", false, "Ability"),
+            new("LaserBeam", "Laser Beam", "Energy", false, "Ability"),
+            new("IceBlast", "Ice Blast", "Ice", false, "Ability"),
+            new("ElectroGlobe", "Electro Globe", "Energy", false, "Ability"),
+            new("AirStrike", "Air Strike", "Explosive", false, "Ability"),
         };
 
         // ============================================
-        // MELEE WEAPONS (3 total)
-        // Asset type is "Melee" in game files
+        // MELEE WEAPONS (5 total - from actual save file)
+        // Path format: /Game/Blueprint/Melee/DA_Melee_{Id}.DA_Melee_{Id}
         // ============================================
         public static readonly WeaponInfo[] MeleeWeapons =
         {
-            new("Claws", "Claws", "Melee", true, "Melee"),
-            new("Sword", "Sword", "Melee", false, "Melee"),
+            new("Claw", "Claw", "Melee", true, "Melee"),
+            new("Dagger", "Dagger", "Melee", false, "Melee"),
             new("Hammer", "Hammer", "Melee", false, "Melee"),
+            new("Pickaxe", "Pickaxe", "Melee", false, "Melee"),
+            new("Katana", "Katana", "Melee", false, "Melee"),
         };
 
         // ============================================
@@ -369,14 +376,22 @@ namespace UnrealSavEditor.Models
         public bool IsStarterWeapon { get; }
         public string AssetPath { get; }
 
+        // For weapons: /Game/Blueprint/Weapon/{Id}/DA_Weapon_{Id}.DA_Weapon_{Id}
         public WeaponInfo(string id, string displayName, string category, bool isStarter, string assetType = "Weapon")
         {
             Id = id;
             DisplayName = displayName;
             Category = category;
             IsStarterWeapon = isStarter;
-            // Asset path format: /Game/Blueprint/{Type}/{Id}/DA_{Type}_{Id}.DA_{Type}_{Id}
-            AssetPath = $"/Game/Blueprint/{assetType}/{id}/DA_{assetType}_{id}.DA_{assetType}_{id}";
+            // Weapons have a subfolder, abilities/melee don't
+            if (assetType == "Weapon")
+                AssetPath = $"/Game/Blueprint/Weapon/{id}/DA_Weapon_{id}.DA_Weapon_{id}";
+            else if (assetType == "Ability")
+                AssetPath = $"/Game/Blueprint/Ability/DA_Ability_{id}.DA_Ability_{id}";
+            else if (assetType == "Melee")
+                AssetPath = $"/Game/Blueprint/Melee/DA_Melee_{id}.DA_Melee_{id}";
+            else
+                AssetPath = $"/Game/Blueprint/{assetType}/{id}/DA_{assetType}_{id}.DA_{assetType}_{id}";
         }
 
         public WeaponInfo(string id, string displayName, string category, bool isStarter, string assetPath, bool customPath)
