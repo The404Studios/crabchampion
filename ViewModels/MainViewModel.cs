@@ -766,6 +766,90 @@ namespace UnrealSavEditor.ViewModels
         }
 
         [RelayCommand]
+        private void ShowSaveStructure()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var propNames = _crabSave.GetAllPropertyNames();
+                var winCounts = _crabSave.GetAllWinCounts();
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("=== SAVE FILE STRUCTURE ===\n");
+                sb.AppendLine($"Total Properties: {propNames.Count}\n");
+
+                sb.AppendLine("--- Win/Difficulty Properties ---");
+                foreach (var win in winCounts.OrderBy(k => k.Key))
+                {
+                    sb.AppendLine($"  {win.Key} = {win.Value}");
+                }
+
+                sb.AppendLine("\n--- All Properties ---");
+                foreach (var name in propNames.Take(100)) // Limit to first 100
+                {
+                    sb.AppendLine($"  {name}");
+                }
+
+                if (propNames.Count > 100)
+                    sb.AppendLine($"  ... and {propNames.Count - 100} more");
+
+                MessageBox.Show(sb.ToString(), "Save File Structure", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading structure: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SearchProperties()
+        {
+            if (_crabSave == null) return;
+
+            // Simple search for weapon-related properties
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("=== WEAPON-RELATED PROPERTIES ===\n");
+
+                var weaponProps = _crabSave.FindPropertiesContaining("weapon");
+                sb.AppendLine($"Properties containing 'weapon': {weaponProps.Count}");
+                foreach (var (path, prop) in weaponProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var unlockProps = _crabSave.FindPropertiesContaining("unlock");
+                sb.AppendLine($"\nProperties containing 'unlock': {unlockProps.Count}");
+                foreach (var (path, prop) in unlockProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var masteryProps = _crabSave.FindPropertiesContaining("mastery");
+                sb.AppendLine($"\nProperties containing 'mastery': {masteryProps.Count}");
+                foreach (var (path, prop) in masteryProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var rarityProps = _crabSave.FindPropertiesContaining("rarity");
+                sb.AppendLine($"\nProperties containing 'rarity': {rarityProps.Count}");
+                foreach (var (path, prop) in rarityProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                MessageBox.Show(sb.ToString(), "Property Search Results", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error searching: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
         private void ExpandAll()
         {
             SetExpanded(Properties, true);

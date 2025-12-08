@@ -521,6 +521,43 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Debug Tools Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="🔧" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Debug Tools" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Inspect save file structure to find correct property names" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ShowSaveStructureCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📋" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Show All Properties"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding SearchPropertiesCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔍" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Search Weapon Props"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <Border Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                <TextBlock Style="{StaticResource LabelText}" TextWrapping="Wrap">
+                                    Use these tools to discover the actual property names in your save file. Report them so unlock features can be fixed!
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Quick Edit Section -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                         <StackPanel>

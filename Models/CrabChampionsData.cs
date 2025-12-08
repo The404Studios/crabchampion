@@ -209,34 +209,66 @@ namespace UnrealSavEditor.Models
 
         // ============================================
         // PROPERTY NAME PATTERNS FOR SAVE FILE
+        // Based on actual Crab Champions save structure
         // ============================================
         public static class PropertyPatterns
         {
-            // Unlock patterns
-            public static readonly string[] UnlockedWeapons = { "UnlockedWeapons", "WeaponUnlocks", "Weapons", "UnlockedPrimaryWeapons" };
-            public static readonly string[] UnlockedAbilities = { "UnlockedAbilities", "AbilityUnlocks", "Abilities", "UnlockedSecondaryWeapons" };
-            public static readonly string[] UnlockedMelee = { "UnlockedMelee", "MeleeUnlocks", "UnlockedMeleeWeapons" };
-            public static readonly string[] UnlockedPerks = { "UnlockedPerks", "PerkUnlocks", "Perks", "AvailablePerks" };
+            // Unlock patterns - lowercase variants common in UE4/UE5
+            public static readonly string[] UnlockedWeapons = {
+                "UnlockedWeapons", "unlockedweapons", "WeaponUnlocks", "weaponunlocks",
+                "Weapons", "weapons", "UnlockedPrimaryWeapons", "unlockedprimaryweapons",
+                "PrimaryWeapons", "primaryweapons", "ownedweapons", "OwnedWeapons"
+            };
+            public static readonly string[] UnlockedAbilities = {
+                "UnlockedAbilities", "unlockedabilities", "AbilityUnlocks", "abilityunlocks",
+                "Abilities", "abilities", "UnlockedSecondaryWeapons", "unlockedsecondaryweapons",
+                "SecondaryWeapons", "secondaryweapons", "ownedabilities", "OwnedAbilities",
+                "grenades", "Grenades"
+            };
+            public static readonly string[] UnlockedMelee = {
+                "UnlockedMelee", "unlockedmelee", "MeleeUnlocks", "meleeunlocks",
+                "UnlockedMeleeWeapons", "unlockedmeleeweapons", "MeleeWeapons", "meleeweapons",
+                "ownedmelee", "OwnedMelee"
+            };
+            public static readonly string[] UnlockedPerks = {
+                "UnlockedPerks", "unlockedperks", "PerkUnlocks", "perkunlocks",
+                "Perks", "perks", "AvailablePerks", "availableperks"
+            };
 
             // Mastery/Rarity patterns
-            public static readonly string[] WeaponMastery = { "WeaponMastery", "Mastery", "WeaponLevels", "WeaponRarity" };
-            public static readonly string[] AbilityMastery = { "AbilityMastery", "AbilityLevels", "AbilityRarity" };
+            public static readonly string[] WeaponMastery = {
+                "WeaponMastery", "weaponmastery", "Mastery", "mastery",
+                "WeaponLevels", "weaponlevels", "WeaponRarity", "weaponrarity",
+                "weapondata", "WeaponData", "weaponstats", "WeaponStats"
+            };
+            public static readonly string[] AbilityMastery = {
+                "AbilityMastery", "abilitymastery", "AbilityLevels", "abilitylevels",
+                "AbilityRarity", "abilityrarity"
+            };
+
+            // Difficulty/Wins patterns - actual Crab Champions naming
+            public static readonly string[] DifficultyWins = {
+                "bronzewins", "BronzeWins", "silverwins", "SilverWins",
+                "goldwins", "GoldWins", "sapphirewins", "SapphireWins",
+                "emeraldwins", "EmeraldWins", "rubywins", "RubyWins",
+                "diamondwins", "DiamondWins", "prismaticwins", "PrismaticWins"
+            };
 
             // Stats patterns
-            public static readonly string[] TotalKills = { "TotalKills", "Kills", "EnemiesKilled" };
-            public static readonly string[] TotalDeaths = { "TotalDeaths", "Deaths", "DeathCount" };
-            public static readonly string[] TotalRuns = { "TotalRuns", "RunsCompleted", "GamesPlayed" };
-            public static readonly string[] HighestWave = { "HighestWave", "MaxWave", "BestWave" };
-            public static readonly string[] TotalPlayTime = { "TotalPlayTime", "PlayTime", "TimePlayed" };
-            public static readonly string[] BossesKilled = { "BossesKilled", "BossKills", "BossesDefeated" };
+            public static readonly string[] TotalKills = { "TotalKills", "totalkills", "Kills", "kills", "EnemiesKilled", "enemieskilled" };
+            public static readonly string[] TotalDeaths = { "TotalDeaths", "totaldeaths", "Deaths", "deaths", "DeathCount", "deathcount" };
+            public static readonly string[] TotalRuns = { "TotalRuns", "totalruns", "RunsCompleted", "runscompleted", "GamesPlayed", "gamesplayed" };
+            public static readonly string[] HighestWave = { "HighestWave", "highestwave", "MaxWave", "maxwave", "BestWave", "bestwave" };
+            public static readonly string[] TotalPlayTime = { "TotalPlayTime", "totalplaytime", "PlayTime", "playtime", "TimePlayed", "timeplayed" };
+            public static readonly string[] BossesKilled = { "BossesKilled", "bosseskilled", "BossKills", "bosskills", "BossesDefeated", "bossesdefeated" };
 
             // Currency patterns
-            public static readonly string[] Crystals = { "Crystals", "TotalCrystals", "Currency" };
-            public static readonly string[] Keys = { "Keys", "TotalKeys", "KeyCount" };
+            public static readonly string[] Crystals = { "Crystals", "crystals", "TotalCrystals", "totalcrystals", "Currency", "currency", "gold", "Gold" };
+            public static readonly string[] Keys = { "Keys", "keys", "TotalKeys", "totalkeys", "KeyCount", "keycount" };
 
             // Challenges patterns
-            public static readonly string[] CompletedChallenges = { "CompletedChallenges", "Challenges", "Achievements" };
-            public static readonly string[] UnlockedDifficulties = { "UnlockedDifficulties", "Difficulties", "DifficultyUnlocks" };
+            public static readonly string[] CompletedChallenges = { "CompletedChallenges", "completedchallenges", "Challenges", "challenges", "Achievements", "achievements" };
+            public static readonly string[] UnlockedDifficulties = { "UnlockedDifficulties", "unlockeddifficulties", "Difficulties", "difficulties", "DifficultyUnlocks", "difficultyunlocks" };
         }
 
         // ============================================

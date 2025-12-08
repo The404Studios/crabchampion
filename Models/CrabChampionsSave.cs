@@ -316,6 +316,120 @@ namespace UnrealSavEditor.Models
         }
 
         // ============================================
+        // DEBUG / DISCOVERY METHODS
+        // ============================================
+
+        /// <summary>
+        /// Get all property names in the save file (for debugging)
+        /// </summary>
+        public List<string> GetAllPropertyNames()
+        {
+            var names = new List<string>();
+            CollectPropertyNames(_gvasFile.Properties, names, "");
+            return names;
+        }
+
+        private void CollectPropertyNames(IEnumerable<GvasProperty> props, List<string> names, string prefix)
+        {
+            foreach (var prop in props)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+                names.Add($"{fullName} ({prop.GetType().Name})");
+
+                if (prop is StructProperty sp)
+                {
+                    CollectPropertyNames(sp.Properties, names, fullName);
+                }
+                else if (prop is ArrayProperty ap)
+                {
+                    foreach (var item in ap.Items)
+                    {
+                        if (item is StructProperty structItem)
+                        {
+                            CollectPropertyNames(structItem.Properties, names, $"{fullName}[]");
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Find all properties containing a specific substring (case-insensitive)
+        /// </summary>
+        public List<(string Path, GvasProperty Property)> FindPropertiesContaining(string substring)
+        {
+            var results = new List<(string, GvasProperty)>();
+            SearchPropertiesContaining(_gvasFile.Properties, substring.ToLowerInvariant(), "", results);
+            return results;
+        }
+
+        private void SearchPropertiesContaining(IEnumerable<GvasProperty> props, string substring, string prefix, List<(string, GvasProperty)> results)
+        {
+            foreach (var prop in props)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+
+                if (prop.Name.ToLowerInvariant().Contains(substring))
+                {
+                    results.Add((fullName, prop));
+                }
+
+                if (prop is StructProperty sp)
+                {
+                    SearchPropertiesContaining(sp.Properties, substring, fullName, results);
+                }
+                else if (prop is ArrayProperty ap)
+                {
+                    foreach (var item in ap.Items)
+                    {
+                        if (item is StructProperty structItem)
+                        {
+                            SearchPropertiesContaining(structItem.Properties, substring, $"{fullName}[]", results);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get all integer properties that might be win counts or difficulty-related
+        /// </summary>
+        public Dictionary<string, int> GetAllWinCounts()
+        {
+            var wins = new Dictionary<string, int>();
+
+            foreach (var prop in _gvasFile.Properties)
+            {
+                CollectWinCounts(prop, wins);
+            }
+
+            return wins;
+        }
+
+        private void CollectWinCounts(GvasProperty prop, Dictionary<string, int> wins)
+        {
+            var name = prop.Name.ToLowerInvariant();
+
+            // Check if this is a win count or difficulty-related
+            if (name.Contains("win") || name.Contains("bronze") || name.Contains("silver") ||
+                name.Contains("gold") || name.Contains("sapphire") || name.Contains("emerald") ||
+                name.Contains("ruby") || name.Contains("diamond") || name.Contains("prismatic") ||
+                name.Contains("difficulty") || name.Contains("tier"))
+            {
+                if (prop is IntProperty ip)
+                    wins[prop.Name] = ip.Value;
+                else if (prop is UInt32Property up)
+                    wins[prop.Name] = (int)up.Value;
+            }
+
+            if (prop is StructProperty sp)
+            {
+                foreach (var child in sp.Properties)
+                    CollectWinCounts(child, wins);
+            }
+        }
+
+        // ============================================
         // ARRAY HELPER METHODS
         // ============================================
 
