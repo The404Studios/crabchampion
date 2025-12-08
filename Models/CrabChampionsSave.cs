@@ -314,6 +314,402 @@ namespace UnrealSavEditor.Models
                 _ => 0
             };
         }
+
+        // ============================================
+        // UNLOCK & MODIFICATION METHODS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all primary weapons
+        /// </summary>
+        public int UnlockAllWeapons()
+        {
+            int unlocked = 0;
+            var weaponIds = CrabChampionsData.GetAllWeaponIds();
+
+            // Find the unlocked weapons array
+            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedWeapons);
+
+            if (unlockProp is ArrayProperty ap)
+            {
+                // Add all weapons to the array if not already present
+                foreach (var weaponId in weaponIds)
+                {
+                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == weaponId) ||
+                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == weaponId);
+
+                    if (!exists)
+                    {
+                        ap.Items.Add(new StrProperty { Name = "", Value = weaponId });
+                        unlocked++;
+                    }
+                }
+            }
+            else
+            {
+                // Try to find and set boolean unlock flags
+                foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+                {
+                    var prop = FindProperty($"{weapon.Id}Unlocked", $"Unlocked{weapon.Id}", $"Has{weapon.Id}");
+                    if (prop is BoolProperty bp && !bp.Value)
+                    {
+                        bp.Value = true;
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all secondary weapons/abilities (grenades, grappling hook, etc.)
+        /// </summary>
+        public int UnlockAllAbilities()
+        {
+            int unlocked = 0;
+            var abilityIds = CrabChampionsData.GetAllAbilityIds();
+
+            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedAbilities);
+
+            if (unlockProp is ArrayProperty ap)
+            {
+                foreach (var abilityId in abilityIds)
+                {
+                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == abilityId) ||
+                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == abilityId);
+
+                    if (!exists)
+                    {
+                        ap.Items.Add(new StrProperty { Name = "", Value = abilityId });
+                        unlocked++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var ability in CrabChampionsData.SecondaryWeapons)
+                {
+                    var prop = FindProperty($"{ability.Id}Unlocked", $"Unlocked{ability.Id}", $"Has{ability.Id}");
+                    if (prop is BoolProperty bp && !bp.Value)
+                    {
+                        bp.Value = true;
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all melee weapons
+        /// </summary>
+        public int UnlockAllMelee()
+        {
+            int unlocked = 0;
+            var meleeIds = CrabChampionsData.GetAllMeleeIds();
+
+            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedMelee);
+
+            if (unlockProp is ArrayProperty ap)
+            {
+                foreach (var meleeId in meleeIds)
+                {
+                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == meleeId) ||
+                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == meleeId);
+
+                    if (!exists)
+                    {
+                        ap.Items.Add(new StrProperty { Name = "", Value = meleeId });
+                        unlocked++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var melee in CrabChampionsData.MeleeWeapons)
+                {
+                    var prop = FindProperty($"{melee.Id}Unlocked", $"Unlocked{melee.Id}", $"Has{melee.Id}");
+                    if (prop is BoolProperty bp && !bp.Value)
+                    {
+                        bp.Value = true;
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all items (weapons, abilities, melee)
+        /// </summary>
+        public (int weapons, int abilities, int melee) UnlockAll()
+        {
+            return (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
+        }
+
+        /// <summary>
+        /// Set all weapons to prismatic rarity (highest tier)
+        /// </summary>
+        public int SetAllWeaponsToPrismatic()
+        {
+            int modified = 0;
+            int prismaticIndex = CrabChampionsData.GetPrismaticRarityIndex();
+
+            // Look for weapon mastery/rarity maps or arrays
+            var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.WeaponMastery);
+
+            if (masteryProp is MapProperty mp)
+            {
+                foreach (var key in mp.Keys.ToList())
+                {
+                    var idx = mp.Keys.IndexOf(key);
+                    if (idx >= 0 && idx < mp.Values.Count)
+                    {
+                        var valueProp = mp.Values[idx];
+                        if (valueProp is IntProperty ip && ip.Value != prismaticIndex)
+                        {
+                            ip.Value = prismaticIndex;
+                            modified++;
+                        }
+                        else if (valueProp is ByteProperty bp)
+                        {
+                            bp.ByteValue = (byte)prismaticIndex;
+                            modified++;
+                        }
+                    }
+                }
+            }
+
+            // Also try individual weapon rarity properties
+            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+            {
+                var rarityProp = FindProperty($"{weapon.Id}Rarity", $"{weapon.Id}Mastery", $"{weapon.Id}Level", $"{weapon.Id}Tier");
+                if (rarityProp != null)
+                {
+                    if (rarityProp is IntProperty ip && ip.Value != prismaticIndex)
+                    {
+                        ip.Value = prismaticIndex;
+                        modified++;
+                    }
+                    else if (rarityProp is ByteProperty byp)
+                    {
+                        byp.ByteValue = (byte)prismaticIndex;
+                        modified++;
+                    }
+                    else if (rarityProp is EnumProperty ep)
+                    {
+                        ep.Value = "Prismatic";
+                        modified++;
+                    }
+                }
+            }
+
+            return modified;
+        }
+
+        /// <summary>
+        /// Set all abilities to prismatic rarity
+        /// </summary>
+        public int SetAllAbilitiesToPrismatic()
+        {
+            int modified = 0;
+            int prismaticIndex = CrabChampionsData.GetPrismaticRarityIndex();
+
+            var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.AbilityMastery);
+
+            if (masteryProp is MapProperty mp)
+            {
+                foreach (var key in mp.Keys.ToList())
+                {
+                    var idx = mp.Keys.IndexOf(key);
+                    if (idx >= 0 && idx < mp.Values.Count)
+                    {
+                        var valueProp = mp.Values[idx];
+                        if (valueProp is IntProperty ip)
+                        {
+                            ip.Value = prismaticIndex;
+                            modified++;
+                        }
+                        else if (valueProp is ByteProperty bp)
+                        {
+                            bp.ByteValue = (byte)prismaticIndex;
+                            modified++;
+                        }
+                    }
+                }
+            }
+
+            foreach (var ability in CrabChampionsData.SecondaryWeapons)
+            {
+                var rarityProp = FindProperty($"{ability.Id}Rarity", $"{ability.Id}Mastery", $"{ability.Id}Level");
+                if (rarityProp != null)
+                {
+                    if (rarityProp is IntProperty ip)
+                    {
+                        ip.Value = prismaticIndex;
+                        modified++;
+                    }
+                    else if (rarityProp is ByteProperty byp)
+                    {
+                        byp.ByteValue = (byte)prismaticIndex;
+                        modified++;
+                    }
+                    else if (rarityProp is EnumProperty ep)
+                    {
+                        ep.Value = "Prismatic";
+                        modified++;
+                    }
+                }
+            }
+
+            return modified;
+        }
+
+        /// <summary>
+        /// Set all items to prismatic rarity
+        /// </summary>
+        public int SetAllToPrismatic()
+        {
+            return SetAllWeaponsToPrismatic() + SetAllAbilitiesToPrismatic();
+        }
+
+        /// <summary>
+        /// Max out all mastery levels
+        /// </summary>
+        public int MaxAllMastery()
+        {
+            int modified = 0;
+            int maxLevel = CrabChampionsData.GetMaxMasteryLevel();
+
+            // Find any mastery-related integer properties
+            foreach (var prop in _gvasFile.Properties)
+            {
+                modified += MaxMasteryRecursive(prop, maxLevel);
+            }
+
+            return modified;
+        }
+
+        private int MaxMasteryRecursive(GvasProperty prop, int maxLevel)
+        {
+            int modified = 0;
+            var name = prop.Name.ToLowerInvariant();
+
+            if (name.Contains("mastery") || name.Contains("level") && !name.Contains("difficultylevel"))
+            {
+                if (prop is IntProperty ip && ip.Value < maxLevel)
+                {
+                    ip.Value = maxLevel;
+                    modified++;
+                }
+            }
+
+            if (prop is StructProperty sp)
+            {
+                foreach (var child in sp.Properties)
+                {
+                    modified += MaxMasteryRecursive(child, maxLevel);
+                }
+            }
+
+            if (prop is ArrayProperty ap)
+            {
+                foreach (var item in ap.Items.OfType<StructProperty>())
+                {
+                    foreach (var child in item.Properties)
+                    {
+                        modified += MaxMasteryRecursive(child, maxLevel);
+                    }
+                }
+            }
+
+            return modified;
+        }
+
+        /// <summary>
+        /// Unlock all difficulty tiers
+        /// </summary>
+        public int UnlockAllDifficulties()
+        {
+            int unlocked = 0;
+
+            var diffProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedDifficulties);
+
+            if (diffProp is ArrayProperty ap)
+            {
+                foreach (var tier in CrabChampionsData.DifficultyTiers)
+                {
+                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == tier) ||
+                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == tier) ||
+                                  ap.Items.OfType<EnumProperty>().Any(e => e.Value.Contains(tier));
+
+                    if (!exists)
+                    {
+                        ap.Items.Add(new StrProperty { Name = "", Value = tier });
+                        unlocked++;
+                    }
+                }
+            }
+            else
+            {
+                // Try individual difficulty unlock flags
+                foreach (var tier in CrabChampionsData.DifficultyTiers)
+                {
+                    var prop = FindProperty($"{tier}Unlocked", $"Unlocked{tier}", $"Has{tier}Difficulty");
+                    if (prop is BoolProperty bp && !bp.Value)
+                    {
+                        bp.Value = true;
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Set currency values to max
+        /// </summary>
+        public void MaxCurrency(int maxValue = 999999)
+        {
+            var crystalProp = FindProperty(CrystalPropertyNames);
+            if (crystalProp != null) crystalProp.SetValue(maxValue);
+
+            var keyProp = FindProperty(KeyPropertyNames);
+            if (keyProp != null) keyProp.SetValue(maxValue);
+        }
+
+        /// <summary>
+        /// Get summary of what can be unlocked
+        /// </summary>
+        public UnlockSummary GetUnlockSummary()
+        {
+            var summary = new UnlockSummary();
+
+            // Count current unlocks vs total
+            summary.TotalWeapons = CrabChampionsData.PrimaryWeapons.Length;
+            summary.TotalAbilities = CrabChampionsData.SecondaryWeapons.Length;
+            summary.TotalMelee = CrabChampionsData.MeleeWeapons.Length;
+            summary.TotalDifficulties = CrabChampionsData.DifficultyTiers.Length;
+
+            // Try to count unlocked items
+            var weaponProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedWeapons);
+            if (weaponProp is ArrayProperty wap)
+                summary.UnlockedWeapons = wap.Items.Count;
+
+            var abilityProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedAbilities);
+            if (abilityProp is ArrayProperty aap)
+                summary.UnlockedAbilities = aap.Items.Count;
+
+            var meleeProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedMelee);
+            if (meleeProp is ArrayProperty map)
+                summary.UnlockedMelee = map.Items.Count;
+
+            return summary;
+        }
     }
 
     /// <summary>
@@ -326,5 +722,23 @@ namespace UnrealSavEditor.Models
         public string Icon { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public double CurrentValue { get; set; }
+    }
+
+    /// <summary>
+    /// Summary of unlock status
+    /// </summary>
+    public class UnlockSummary
+    {
+        public int UnlockedWeapons { get; set; }
+        public int TotalWeapons { get; set; }
+        public int UnlockedAbilities { get; set; }
+        public int TotalAbilities { get; set; }
+        public int UnlockedMelee { get; set; }
+        public int TotalMelee { get; set; }
+        public int TotalDifficulties { get; set; }
+
+        public string WeaponsStatus => $"{UnlockedWeapons}/{TotalWeapons}";
+        public string AbilitiesStatus => $"{UnlockedAbilities}/{TotalAbilities}";
+        public string MeleeStatus => $"{UnlockedMelee}/{TotalMelee}";
     }
 }
