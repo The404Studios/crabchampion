@@ -461,24 +461,24 @@ namespace UnrealSavEditor.Models
             // Look for weapon mastery/rarity maps or arrays
             var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.WeaponMastery);
 
-            if (masteryProp is MapProperty mp)
+            if (masteryProp is MapProperty mp && mp.Entries != null)
             {
-                foreach (var key in mp.Keys.ToList())
+                foreach (var kvp in mp.Entries.ToList())
                 {
-                    var idx = mp.Keys.IndexOf(key);
-                    if (idx >= 0 && idx < mp.Values.Count)
+                    if (kvp.Value is IntProperty ip && ip.Value != prismaticIndex)
                     {
-                        var valueProp = mp.Values[idx];
-                        if (valueProp is IntProperty ip && ip.Value != prismaticIndex)
-                        {
-                            ip.Value = prismaticIndex;
-                            modified++;
-                        }
-                        else if (valueProp is ByteProperty bp)
-                        {
-                            bp.ByteValue = (byte)prismaticIndex;
-                            modified++;
-                        }
+                        ip.Value = prismaticIndex;
+                        modified++;
+                    }
+                    else if (kvp.Value is ByteProperty bp)
+                    {
+                        bp.ByteValue = (byte)prismaticIndex;
+                        modified++;
+                    }
+                    else if (kvp.Value is int intVal && intVal != prismaticIndex)
+                    {
+                        mp.Entries[kvp.Key] = prismaticIndex;
+                        modified++;
                     }
                 }
             }
@@ -520,24 +520,24 @@ namespace UnrealSavEditor.Models
 
             var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.AbilityMastery);
 
-            if (masteryProp is MapProperty mp)
+            if (masteryProp is MapProperty mp && mp.Entries != null)
             {
-                foreach (var key in mp.Keys.ToList())
+                foreach (var kvp in mp.Entries.ToList())
                 {
-                    var idx = mp.Keys.IndexOf(key);
-                    if (idx >= 0 && idx < mp.Values.Count)
+                    if (kvp.Value is IntProperty ip)
                     {
-                        var valueProp = mp.Values[idx];
-                        if (valueProp is IntProperty ip)
-                        {
-                            ip.Value = prismaticIndex;
-                            modified++;
-                        }
-                        else if (valueProp is ByteProperty bp)
-                        {
-                            bp.ByteValue = (byte)prismaticIndex;
-                            modified++;
-                        }
+                        ip.Value = prismaticIndex;
+                        modified++;
+                    }
+                    else if (kvp.Value is ByteProperty bp)
+                    {
+                        bp.ByteValue = (byte)prismaticIndex;
+                        modified++;
+                    }
+                    else if (kvp.Value is int intVal && intVal != prismaticIndex)
+                    {
+                        mp.Entries[kvp.Key] = prismaticIndex;
+                        modified++;
                     }
                 }
             }
