@@ -83,6 +83,16 @@ namespace UnrealSavEditor.ViewModels
         [ObservableProperty]
         private string _compressionType = "None";
 
+        // Unlock summary
+        [ObservableProperty]
+        private string _weaponsStatus = "0/18";
+
+        [ObservableProperty]
+        private string _abilitiesStatus = "0/5";
+
+        [ObservableProperty]
+        private string _meleeStatus = "0/3";
+
         // Quick edit values for Crab Champions
         [ObservableProperty]
         private string _quickCrystals = "0";
@@ -435,6 +445,445 @@ namespace UnrealSavEditor.ViewModels
             ApplyQuickEdit(value);
         }
 
+        // ============================================
+        // QUICK ACTION COMMANDS
+        // ============================================
+
+        [RelayCommand]
+        private void UnlockAllWeapons()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllWeapons();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} weapons!" : "All weapons already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking weapons: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllAbilities()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllAbilities();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} abilities!" : "All abilities already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking abilities: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllMelee()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllMelee();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} melee weapons!" : "All melee weapons already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking melee: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockEverything()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var (weapons, abilities, melee) = _crabSave.UnlockAll();
+                int difficulties = _crabSave.UnlockAllDifficulties();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+
+                int total = weapons + abilities + melee + difficulties;
+                StatusMessage = total > 0
+                    ? $"Unlocked everything! ({weapons} weapons, {abilities} abilities, {melee} melee, {difficulties} difficulties)"
+                    : "Everything already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking everything: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SetAllPrismatic()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.SetAllToPrismatic();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Set {count} items to Prismatic rarity!" : "All items already Prismatic!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error setting prismatic: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void MaxAllMastery()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.MaxAllMastery();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Maxed {count} mastery levels!" : "All mastery levels already maxed!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error maxing mastery: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void MaxCurrency()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                _crabSave.MaxCurrency();
+                HasUnsavedChanges = true;
+                UpdateQuickEditValues();
+                RefreshTree();
+                StatusMessage = "Currency maxed to 999,999!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error maxing currency: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllDifficulties()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllDifficulties();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} difficulty tiers!" : "All difficulties already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking difficulties: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void GodMode()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                // Apply all cheats at once
+                var (weapons, abilities, melee) = _crabSave.UnlockAll();
+                int difficulties = _crabSave.UnlockAllDifficulties();
+                int prismatic = _crabSave.SetAllToPrismatic();
+                int mastery = _crabSave.MaxAllMastery();
+                _crabSave.MaxCurrency();
+
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                UpdateQuickEditValues();
+                RefreshTree();
+
+                StatusMessage = $"GOD MODE ACTIVATED! Unlocked {weapons + abilities + melee} items, {difficulties} difficulties, {prismatic} set to Prismatic, {mastery} mastery maxed!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error activating god mode: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void UpdateUnlockStatus()
+        {
+            if (_crabSave == null) return;
+
+            var summary = _crabSave.GetUnlockSummary();
+            WeaponsStatus = summary.WeaponsStatus;
+            AbilitiesStatus = summary.AbilitiesStatus;
+            MeleeStatus = summary.MeleeStatus;
+        }
+
+        // ============================================
+        // PRESET PROFILE COMMANDS
+        // ============================================
+
+        [RelayCommand]
+        private void ApplyPreset(string presetId)
+        {
+            if (_crabSave == null) return;
+
+            var preset = CrabChampionsData.Presets.FirstOrDefault(p => p.Id == presetId);
+            if (preset == null) return;
+
+            if (preset.IsReset)
+            {
+                var result = MessageBox.Show(
+                    "This will reset your save to default. Are you sure?",
+                    "Confirm Reset",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes) return;
+            }
+
+            try
+            {
+                var presetResult = _crabSave.ApplyPreset(preset);
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                UpdateQuickEditValues();
+                RefreshTree();
+
+                StatusMessage = presetResult.TotalChanges > 0
+                    ? $"{preset.DisplayName} applied! {presetResult.TotalChanges} changes made."
+                    : $"{preset.DisplayName} - No changes needed (already applied).";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying preset: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ============================================
+        // STATS COMMANDS
+        // ============================================
+
+        [RelayCommand]
+        private void MaxAllStats()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.MaxAllStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Maxed {count} stats!" : "No stats found to modify.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error maxing stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void ResetAllStats()
+        {
+            if (_crabSave == null) return;
+
+            var result = MessageBox.Show(
+                "This will reset all your stats to zero. Are you sure?",
+                "Confirm Reset",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                int count = _crabSave.ResetAllStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Reset {count} stats to zero." : "No stats found to reset.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error resetting stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SetImpressiveStats()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                _crabSave.SetImpressiveStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = "Stats set to impressive values!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error setting stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllPerks()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllPerks();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} perks!" : "All perks already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking perks: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void ShowSaveStructure()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var propNames = _crabSave.GetAllPropertyNames();
+                var winCounts = _crabSave.GetAllWinCounts();
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("=== SAVE FILE STRUCTURE ===\n");
+                sb.AppendLine($"Total Properties: {propNames.Count}\n");
+
+                sb.AppendLine("--- Win/Difficulty Properties ---");
+                foreach (var win in winCounts.OrderBy(k => k.Key))
+                {
+                    sb.AppendLine($"  {win.Key} = {win.Value}");
+                }
+
+                sb.AppendLine("\n--- All Properties ---");
+                foreach (var name in propNames.Take(100)) // Limit to first 100
+                {
+                    sb.AppendLine($"  {name}");
+                }
+
+                if (propNames.Count > 100)
+                    sb.AppendLine($"  ... and {propNames.Count - 100} more");
+
+                MessageBox.Show(sb.ToString(), "Save File Structure", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading structure: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SearchProperties()
+        {
+            if (_crabSave == null) return;
+
+            // Simple search for weapon-related properties
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("=== WEAPON-RELATED PROPERTIES ===\n");
+
+                var weaponProps = _crabSave.FindPropertiesContaining("weapon");
+                sb.AppendLine($"Properties containing 'weapon': {weaponProps.Count}");
+                foreach (var (path, prop) in weaponProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var unlockProps = _crabSave.FindPropertiesContaining("unlock");
+                sb.AppendLine($"\nProperties containing 'unlock': {unlockProps.Count}");
+                foreach (var (path, prop) in unlockProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var masteryProps = _crabSave.FindPropertiesContaining("mastery");
+                sb.AppendLine($"\nProperties containing 'mastery': {masteryProps.Count}");
+                foreach (var (path, prop) in masteryProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                var rarityProps = _crabSave.FindPropertiesContaining("rarity");
+                sb.AppendLine($"\nProperties containing 'rarity': {rarityProps.Count}");
+                foreach (var (path, prop) in rarityProps.Take(20))
+                {
+                    sb.AppendLine($"  {path} ({prop.GetType().Name})");
+                }
+
+                MessageBox.Show(sb.ToString(), "Property Search Results", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error searching: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void DumpFullStructure()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var dump = _crabSave.DumpSaveStructure();
+
+                // Also save to a file for easier reading
+                var dumpPath = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                    "CrabChampions_SaveDump.txt");
+
+                System.IO.File.WriteAllText(dumpPath, dump);
+
+                MessageBox.Show(
+                    $"Save structure dumped!\n\nFull dump saved to:\n{dumpPath}\n\n" +
+                    "Please share this file to help fix the unlock/prismatic features.",
+                    "Save Structure Dump",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // Also show in message box (truncated)
+                if (dump.Length > 4000)
+                    dump = dump.Substring(0, 4000) + "\n\n... (truncated, see file for full dump)";
+
+                MessageBox.Show(dump, "Save Structure (Preview)", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error dumping structure: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         [RelayCommand]
         private void ExpandAll()
         {
@@ -539,6 +988,9 @@ namespace UnrealSavEditor.ViewModels
 
                     // Populate quick edit values
                     UpdateQuickEditValues();
+
+                    // Update unlock status
+                    UpdateUnlockStatus();
 
                     ApplyFilter();
                     AddToRecentFiles(path);

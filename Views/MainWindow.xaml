@@ -265,6 +265,319 @@
                         </Grid>
                     </Border>
 
+                    <!-- Quick Actions Card - Unlock Everything -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="🚀" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Quick Actions" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Unlock all items, set to Prismatic, and more" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- God Mode Button - The Big One -->
+                            <Border CornerRadius="12" Margin="0,0,0,20">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#F97316" Offset="0"/>
+                                        <GradientStop Color="#EC4899" Offset="0.5"/>
+                                        <GradientStop Color="#8B5CF6" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Button Command="{Binding GodModeCommand}" Cursor="Hand"
+                                        Background="Transparent" BorderThickness="0" Padding="24,16">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <TextBlock Text="👑" FontSize="24" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                                    <StackPanel>
+                                                        <TextBlock Text="GOD MODE" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                                        <TextBlock Text="Unlock ALL + Prismatic + Max Everything" FontSize="12" Foreground="#FFFFFF99"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Border>
+
+                            <!-- Unlock Status Display -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🔫" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Weapons" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding WeaponsStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#22D3EE"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="#0F172A" CornerRadius="8" Padding="12" Margin="4,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="💣" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Abilities" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding AbilitiesStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#22D3EE"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="#0F172A" CornerRadius="8" Padding="12" Margin="8,0,0,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🗡️" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Melee" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding MeleeStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#22D3EE"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Individual Unlock Buttons Row 1 -->
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllWeaponsCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔫" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Weapons"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllAbilitiesCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💣" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Abilities"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllMeleeCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗡️" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Melee"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockEverythingCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔓" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock Everything"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Individual Action Buttons Row 2 -->
+                            <WrapPanel>
+                                <Button Margin="0,0,8,8" Padding="14,10" Cursor="Hand"
+                                        Command="{Binding SetAllPrismaticCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="Background">
+                                                <Setter.Value>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#1E293B" Offset="0"/>
+                                                        <GradientStop Color="#312E81" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💎" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Set All Prismatic"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding MaxAllMasteryCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📈" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Max All Mastery"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding MaxCurrencyCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💰" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Max Currency"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllDifficultiesCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎯" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock Difficulties"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Preset Profiles Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="🎭" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Preset Profiles" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Quick apply preset configurations" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="AllUnlocks">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔓" Margin="0,0,8,0"/>
+                                        <TextBlock Text="All Unlocks"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="Prismatic">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💎" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Prismatic Collection"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="RichCrab">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💰" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Rich Crab"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding UnlockAllPerksCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⭐" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Perks"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Stats Editor Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="📊" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Stats Editor" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Modify game statistics and achievements" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding MaxAllStatsCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📈" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Max All Stats"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding SetImpressiveStatsCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🏆" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Impressive Stats"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Margin="0,0,8,8" Padding="14,10" Cursor="Hand"
+                                        Command="{Binding ResetAllStatsCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="BorderBrush" Value="#EF4444"/>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗑️" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Reset Stats"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Stats Info -->
+                            <Border Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                <TextBlock Style="{StaticResource LabelText}" TextWrapping="Wrap">
+                                    Stats tracked: Kills, Deaths, Bosses, Damage, Runs, Waves, Play Time, Crystals, and more.
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Debug Tools Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="🔧" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Debug Tools" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Inspect save file structure to find correct property names" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ShowSaveStructureCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📋" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Show All Properties"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding SearchPropertiesCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔍" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Search Weapon Props"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Margin="0,0,8,8" Padding="14,10" Cursor="Hand"
+                                        Command="{Binding DumpFullStructureCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="Background">
+                                                <Setter.Value>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#1E293B" Offset="0"/>
+                                                        <GradientStop Color="#7C3AED" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📦" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Dump Full Structure"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <Border Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                <TextBlock Style="{StaticResource LabelText}" TextWrapping="Wrap">
+                                    Use "Dump Full Structure" to export all Maps, Arrays, and potential rarity values to a file. Share this to help fix unlock/prismatic features!
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Quick Edit Section -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                         <StackPanel>
