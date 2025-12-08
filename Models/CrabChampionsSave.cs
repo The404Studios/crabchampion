@@ -646,45 +646,95 @@ namespace UnrealSavEditor.Models
         // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
-        // WARNING: Unlock methods are currently DISABLED because adding to arrays
-        // corrupts the save file. The game's asset path format is not fully understood.
-        // Only the prismatic feature works (modifies existing entries, doesn't add new ones).
+        // These methods add items to unlock arrays using correct asset paths
+        // verified from actual save file analysis.
 
         /// <summary>
-        /// Unlock all primary weapons - DISABLED to prevent save corruption
+        /// Check if array contains a path (case-insensitive)
+        /// </summary>
+        private bool ArrayContainsPath(ArrayProperty ap, string path)
+        {
+            var pathLower = path.ToLowerInvariant();
+            foreach (var item in ap.Items)
+            {
+                if (item?.ToString()?.ToLowerInvariant() == pathLower)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Unlock all primary weapons
         /// </summary>
         public int UnlockAllWeapons()
         {
-            // DISABLED: Adding to arrays corrupts saves
-            // The game's expected asset path format is unknown
-            return 0;
+            int unlocked = 0;
+            var prop = FindProperty("UnlockedWeapons", "unlockedweapons");
+
+            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            {
+                foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+                {
+                    if (!ArrayContainsPath(ap, weapon.AssetPath))
+                    {
+                        ap.Items.Add(weapon.AssetPath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
         }
 
         /// <summary>
-        /// Unlock all secondary weapons/abilities - DISABLED to prevent save corruption
+        /// Unlock all abilities
         /// </summary>
         public int UnlockAllAbilities()
         {
-            // DISABLED: Adding to arrays corrupts saves
-            return 0;
+            int unlocked = 0;
+            var prop = FindProperty("UnlockedAbilities", "unlockedabilities");
+
+            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            {
+                foreach (var ability in CrabChampionsData.SecondaryWeapons)
+                {
+                    if (!ArrayContainsPath(ap, ability.AssetPath))
+                    {
+                        ap.Items.Add(ability.AssetPath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
         }
 
         /// <summary>
-        /// Unlock all melee weapons - DISABLED to prevent save corruption
+        /// Unlock all melee weapons
         /// </summary>
         public int UnlockAllMelee()
         {
-            // DISABLED: Adding to arrays corrupts saves
-            return 0;
+            int unlocked = 0;
+            var prop = FindProperty("UnlockedMeleeWeapons", "unlockedmeleeweapons");
+
+            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            {
+                foreach (var melee in CrabChampionsData.MeleeWeapons)
+                {
+                    if (!ArrayContainsPath(ap, melee.AssetPath))
+                    {
+                        ap.Items.Add(melee.AssetPath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
         }
 
         /// <summary>
-        /// Unlock all items - DISABLED to prevent save corruption
+        /// Unlock all items (weapons, abilities, melee)
         /// </summary>
         public (int weapons, int abilities, int melee) UnlockAll()
         {
-            // DISABLED: Adding to arrays corrupts saves
-            return (0, 0, 0);
+            return (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
         }
 
         /// <summary>
