@@ -84,8 +84,12 @@ namespace UnrealSavEditor.Models
         /// </summary>
         private static byte[] DecompressZlib(byte[] compressedData)
         {
-            // Skip 2-byte Zlib header
-            using var compressedStream = new MemoryStream(compressedData, 2, compressedData.Length - 2);
+            // Zlib format: 2-byte header + deflate data + 4-byte Adler32 checksum
+            // We skip the header and strip the checksum for decompression
+            int dataLength = compressedData.Length - 2 - 4; // Skip header and checksum
+            if (dataLength < 0) dataLength = compressedData.Length - 2; // Fallback if no checksum
+
+            using var compressedStream = new MemoryStream(compressedData, 2, dataLength > 0 ? dataLength : compressedData.Length - 2);
             using var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress);
             using var resultStream = new MemoryStream();
             deflateStream.CopyTo(resultStream);
@@ -106,7 +110,7 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Compress data with Zlib
+        /// Compress data with Zlib (includes Adler32 checksum)
         /// </summary>
         private static byte[] CompressZlib(byte[] data)
         {
@@ -119,7 +123,32 @@ namespace UnrealSavEditor.Models
             {
                 deflateStream.Write(data, 0, data.Length);
             }
+
+            // Calculate and write Adler32 checksum (required for Zlib)
+            uint adler = CalculateAdler32(data);
+            resultStream.WriteByte((byte)(adler >> 24));
+            resultStream.WriteByte((byte)(adler >> 16));
+            resultStream.WriteByte((byte)(adler >> 8));
+            resultStream.WriteByte((byte)adler);
+
             return resultStream.ToArray();
+        }
+
+        /// <summary>
+        /// Calculate Adler32 checksum for Zlib
+        /// </summary>
+        private static uint CalculateAdler32(byte[] data)
+        {
+            const uint MOD_ADLER = 65521;
+            uint a = 1, b = 0;
+
+            foreach (byte byteValue in data)
+            {
+                a = (a + byteValue) % MOD_ADLER;
+                b = (b + a) % MOD_ADLER;
+            }
+
+            return (b << 16) | a;
         }
 
         /// <summary>

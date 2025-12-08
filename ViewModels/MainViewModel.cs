@@ -256,7 +256,10 @@ namespace UnrealSavEditor.ViewModels
                 await Task.Run(() => _currentFile.Save());
 
                 HasUnsavedChanges = false;
-                StatusMessage = "File saved successfully! Backup created.";
+                var compressionInfo = _currentFile.OriginalCompression != SaveCompressionType.None
+                    ? $" (re-compressed as {_currentFile.OriginalCompression})"
+                    : "";
+                StatusMessage = $"File saved successfully!{compressionInfo} Backup created.";
             }
             catch (Exception ex)
             {
