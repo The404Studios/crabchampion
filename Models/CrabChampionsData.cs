@@ -84,26 +84,127 @@ namespace UnrealSavEditor.Models
         };
 
         // ============================================
-        // PERKS (common upgrade type)
+        // PERKS / UPGRADES (In-game powerups)
         // ============================================
-        public static readonly string[] PerkCategories =
+        public static readonly PerkInfo[] Perks =
         {
-            "Damage",
-            "Defense",
-            "Utility",
-            "Movement",
-            "Luck"
+            // Damage perks
+            new("DamageUp", "Damage Up", "Damage", "Increases damage dealt"),
+            new("CritChance", "Critical Chance", "Damage", "Increases critical hit chance"),
+            new("CritDamage", "Critical Damage", "Damage", "Increases critical hit damage"),
+            new("FireRate", "Fire Rate", "Damage", "Increases attack speed"),
+            new("Multishot", "Multishot", "Damage", "Chance to fire additional projectiles"),
+            new("Piercing", "Piercing", "Damage", "Projectiles pierce through enemies"),
+            new("ExplosiveRounds", "Explosive Rounds", "Damage", "Attacks explode on impact"),
+            new("ChainLightning", "Chain Lightning", "Damage", "Attacks chain to nearby enemies"),
+
+            // Defense perks
+            new("MaxHealth", "Max Health", "Defense", "Increases maximum health"),
+            new("HealthRegen", "Health Regen", "Defense", "Regenerate health over time"),
+            new("Armor", "Armor", "Defense", "Reduces damage taken"),
+            new("DodgeChance", "Dodge Chance", "Defense", "Chance to avoid damage"),
+            new("Shield", "Shield", "Defense", "Gain a protective shield"),
+            new("Lifesteal", "Lifesteal", "Defense", "Heal on dealing damage"),
+            new("DamageReduction", "Damage Reduction", "Defense", "Flat damage reduction"),
+
+            // Movement perks
+            new("MoveSpeed", "Move Speed", "Movement", "Increases movement speed"),
+            new("JumpHeight", "Jump Height", "Movement", "Increases jump height"),
+            new("DoubleJump", "Double Jump", "Movement", "Gain an extra jump"),
+            new("DashDistance", "Dash Distance", "Movement", "Increases dash range"),
+            new("DashCooldown", "Dash Cooldown", "Movement", "Reduces dash cooldown"),
+
+            // Utility perks
+            new("CooldownReduction", "Cooldown Reduction", "Utility", "Reduces ability cooldowns"),
+            new("LuckUp", "Luck Up", "Utility", "Increases item drop quality"),
+            new("XPGain", "XP Gain", "Utility", "Increases experience gained"),
+            new("GoldFind", "Gold Find", "Utility", "Increases crystal drops"),
+            new("MagnetRange", "Magnet Range", "Utility", "Increases pickup range"),
+            new("ReviveChance", "Second Wind", "Utility", "Chance to revive on death"),
         };
 
         // ============================================
-        // RELICS
+        // GAME MODES
         // ============================================
-        public static readonly string[] RelicTypes =
+        public static readonly string[] GameModes =
         {
-            "Common",
-            "Rare",
-            "Legendary",
-            "Cursed"
+            "Classic",
+            "Endless",
+            "Challenge",
+            "Daily",
+            "Weekly"
+        };
+
+        // ============================================
+        // ISLAND BIOMES
+        // ============================================
+        public static readonly string[] Biomes =
+        {
+            "Beach",
+            "Jungle",
+            "Volcano",
+            "Crystal",
+            "Ice",
+            "Void"
+        };
+
+        // ============================================
+        // BOSS TYPES
+        // ============================================
+        public static readonly string[] Bosses =
+        {
+            "KingCrab",
+            "GiantSquid",
+            "MegaShark",
+            "LavaGolem",
+            "IceDragon",
+            "VoidKraken"
+        };
+
+        // ============================================
+        // STAT TRACKING CATEGORIES
+        // ============================================
+        public static readonly StatInfo[] TrackedStats =
+        {
+            new("TotalKills", "Total Kills", "Combat", "Total enemies killed"),
+            new("TotalDeaths", "Total Deaths", "Combat", "Total times died"),
+            new("BossesKilled", "Bosses Killed", "Combat", "Total bosses defeated"),
+            new("DamageDealt", "Damage Dealt", "Combat", "Total damage inflicted"),
+            new("DamageTaken", "Damage Taken", "Combat", "Total damage received"),
+            new("CriticalHits", "Critical Hits", "Combat", "Total critical hits landed"),
+
+            new("TotalRuns", "Total Runs", "Progress", "Total runs started"),
+            new("RunsCompleted", "Runs Completed", "Progress", "Successful run completions"),
+            new("HighestWave", "Highest Wave", "Progress", "Best wave reached"),
+            new("HighestDifficulty", "Highest Difficulty", "Progress", "Hardest difficulty beaten"),
+
+            new("TotalPlayTime", "Play Time", "General", "Total time played (seconds)"),
+            new("CrystalsCollected", "Crystals Collected", "General", "Total crystals earned"),
+            new("KeysCollected", "Keys Collected", "General", "Total keys found"),
+            new("ItemsCollected", "Items Collected", "General", "Total items picked up"),
+            new("PerksObtained", "Perks Obtained", "General", "Total perks collected"),
+
+            new("ShotsFired", "Shots Fired", "Misc", "Total projectiles fired"),
+            new("Accuracy", "Accuracy", "Misc", "Hit percentage"),
+            new("DistanceTraveled", "Distance Traveled", "Misc", "Total distance moved"),
+            new("JumpsPerformed", "Jumps", "Misc", "Total jumps"),
+        };
+
+        // ============================================
+        // PRESET PROFILES
+        // ============================================
+        public static readonly PresetProfile[] Presets =
+        {
+            new("GodMode", "God Mode", "Unlock everything, max stats, prismatic rarity",
+                unlockAll: true, prismatic: true, maxCurrency: true, maxMastery: true),
+            new("AllUnlocks", "All Unlocks", "Unlock all weapons and difficulties only",
+                unlockAll: true, prismatic: false, maxCurrency: false, maxMastery: false),
+            new("Prismatic", "Prismatic Collection", "Set all items to prismatic rarity",
+                unlockAll: false, prismatic: true, maxCurrency: false, maxMastery: false),
+            new("RichCrab", "Rich Crab", "Max out currency only",
+                unlockAll: false, prismatic: false, maxCurrency: true, maxMastery: false),
+            new("FreshStart", "Fresh Start", "Reset to default (starter weapons only)",
+                unlockAll: false, prismatic: false, maxCurrency: false, maxMastery: false, isReset: true),
         };
 
         // ============================================
@@ -115,6 +216,7 @@ namespace UnrealSavEditor.Models
             public static readonly string[] UnlockedWeapons = { "UnlockedWeapons", "WeaponUnlocks", "Weapons", "UnlockedPrimaryWeapons" };
             public static readonly string[] UnlockedAbilities = { "UnlockedAbilities", "AbilityUnlocks", "Abilities", "UnlockedSecondaryWeapons" };
             public static readonly string[] UnlockedMelee = { "UnlockedMelee", "MeleeUnlocks", "UnlockedMeleeWeapons" };
+            public static readonly string[] UnlockedPerks = { "UnlockedPerks", "PerkUnlocks", "Perks", "AvailablePerks" };
 
             // Mastery/Rarity patterns
             public static readonly string[] WeaponMastery = { "WeaponMastery", "Mastery", "WeaponLevels", "WeaponRarity" };
@@ -122,9 +224,11 @@ namespace UnrealSavEditor.Models
 
             // Stats patterns
             public static readonly string[] TotalKills = { "TotalKills", "Kills", "EnemiesKilled" };
+            public static readonly string[] TotalDeaths = { "TotalDeaths", "Deaths", "DeathCount" };
             public static readonly string[] TotalRuns = { "TotalRuns", "RunsCompleted", "GamesPlayed" };
             public static readonly string[] HighestWave = { "HighestWave", "MaxWave", "BestWave" };
             public static readonly string[] TotalPlayTime = { "TotalPlayTime", "PlayTime", "TimePlayed" };
+            public static readonly string[] BossesKilled = { "BossesKilled", "BossKills", "BossesDefeated" };
 
             // Currency patterns
             public static readonly string[] Crystals = { "Crystals", "TotalCrystals", "Currency" };
@@ -178,6 +282,16 @@ namespace UnrealSavEditor.Models
             foreach (var m in MeleeWeapons) ids.Add(m.Id);
             return ids;
         }
+
+        /// <summary>
+        /// Get all perk IDs for unlocking
+        /// </summary>
+        public static List<string> GetAllPerkIds()
+        {
+            var ids = new List<string>();
+            foreach (var p in Perks) ids.Add(p.Id);
+            return ids;
+        }
     }
 
     /// <summary>
@@ -196,6 +310,73 @@ namespace UnrealSavEditor.Models
             DisplayName = displayName;
             Category = category;
             IsStarterWeapon = isStarter;
+        }
+    }
+
+    /// <summary>
+    /// Represents a perk/upgrade in the game
+    /// </summary>
+    public class PerkInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Category { get; }
+        public string Description { get; }
+
+        public PerkInfo(string id, string displayName, string category, string description)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Category = category;
+            Description = description;
+        }
+    }
+
+    /// <summary>
+    /// Represents a tracked statistic
+    /// </summary>
+    public class StatInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Category { get; }
+        public string Description { get; }
+
+        public StatInfo(string id, string displayName, string category, string description)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Category = category;
+            Description = description;
+        }
+    }
+
+    /// <summary>
+    /// Represents a preset profile for quick modifications
+    /// </summary>
+    public class PresetProfile
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Description { get; }
+        public bool UnlockAll { get; }
+        public bool SetPrismatic { get; }
+        public bool MaxCurrency { get; }
+        public bool MaxMastery { get; }
+        public bool IsReset { get; }
+
+        public PresetProfile(string id, string displayName, string description,
+            bool unlockAll = false, bool prismatic = false, bool maxCurrency = false,
+            bool maxMastery = false, bool isReset = false)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Description = description;
+            UnlockAll = unlockAll;
+            SetPrismatic = prismatic;
+            MaxCurrency = maxCurrency;
+            MaxMastery = maxMastery;
+            IsReset = isReset;
         }
     }
 }

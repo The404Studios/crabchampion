@@ -710,6 +710,214 @@ namespace UnrealSavEditor.Models
 
             return summary;
         }
+
+        // ============================================
+        // PRESET PROFILE METHODS
+        // ============================================
+
+        /// <summary>
+        /// Apply a preset profile to the save
+        /// </summary>
+        public PresetResult ApplyPreset(PresetProfile preset)
+        {
+            var result = new PresetResult { PresetName = preset.DisplayName };
+
+            if (preset.IsReset)
+            {
+                result.Message = "Reset functionality requires manual confirmation";
+                return result;
+            }
+
+            if (preset.UnlockAll)
+            {
+                result.WeaponsUnlocked = UnlockAllWeapons();
+                result.AbilitiesUnlocked = UnlockAllAbilities();
+                result.MeleeUnlocked = UnlockAllMelee();
+                result.DifficultiesUnlocked = UnlockAllDifficulties();
+            }
+
+            if (preset.SetPrismatic)
+            {
+                result.ItemsSetPrismatic = SetAllToPrismatic();
+            }
+
+            if (preset.MaxMastery)
+            {
+                result.MasteryMaxed = MaxAllMastery();
+            }
+
+            if (preset.MaxCurrency)
+            {
+                MaxCurrency();
+                result.CurrencyMaxed = true;
+            }
+
+            return result;
+        }
+
+        // ============================================
+        // STATS EDITING METHODS
+        // ============================================
+
+        /// <summary>
+        /// Get all tracked stats from the save
+        /// </summary>
+        public Dictionary<string, StatValue> GetAllStats()
+        {
+            var stats = new Dictionary<string, StatValue>();
+
+            foreach (var statInfo in CrabChampionsData.TrackedStats)
+            {
+                var prop = FindPropertyByPatterns(statInfo.Id);
+                if (prop != null)
+                {
+                    stats[statInfo.Id] = new StatValue
+                    {
+                        Info = statInfo,
+                        Property = prop,
+                        CurrentValue = GetNumericValue(prop)
+                    };
+                }
+            }
+
+            return stats;
+        }
+
+        /// <summary>
+        /// Set a specific stat value
+        /// </summary>
+        public bool SetStat(string statId, double value)
+        {
+            var prop = FindPropertyByPatterns(statId);
+            if (prop == null) return false;
+
+            switch (prop)
+            {
+                case IntProperty ip:
+                    ip.Value = (int)value;
+                    return true;
+                case UInt32Property up:
+                    up.Value = (uint)value;
+                    return true;
+                case Int64Property lp:
+                    lp.Value = (long)value;
+                    return true;
+                case FloatProperty fp:
+                    fp.Value = (float)value;
+                    return true;
+                case DoubleProperty dp:
+                    dp.Value = value;
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Max out all stats
+        /// </summary>
+        public int MaxAllStats()
+        {
+            int modified = 0;
+
+            foreach (var statInfo in CrabChampionsData.TrackedStats)
+            {
+                var prop = FindPropertyByPatterns(statInfo.Id);
+                if (prop != null)
+                {
+                    int maxValue = statInfo.Category == "Misc" && statInfo.Id == "Accuracy" ? 100 : 999999;
+                    if (SetStat(statInfo.Id, maxValue))
+                        modified++;
+                }
+            }
+
+            return modified;
+        }
+
+        /// <summary>
+        /// Reset all stats to zero
+        /// </summary>
+        public int ResetAllStats()
+        {
+            int modified = 0;
+
+            foreach (var statInfo in CrabChampionsData.TrackedStats)
+            {
+                if (SetStat(statInfo.Id, 0))
+                    modified++;
+            }
+
+            return modified;
+        }
+
+        /// <summary>
+        /// Set specific stats for "impressive" profile
+        /// </summary>
+        public void SetImpressiveStats()
+        {
+            SetStat("TotalKills", 50000);
+            SetStat("BossesKilled", 500);
+            SetStat("TotalRuns", 100);
+            SetStat("RunsCompleted", 75);
+            SetStat("HighestWave", 50);
+            SetStat("CrystalsCollected", 100000);
+        }
+
+        private GvasProperty? FindPropertyByPatterns(string primaryName)
+        {
+            // Try exact match first
+            var prop = FindProperty(primaryName);
+            if (prop != null) return prop;
+
+            // Try common variations
+            string[] patterns = { primaryName, $"Total{primaryName}", $"{primaryName}Count", $"Player{primaryName}" };
+            return FindProperty(patterns);
+        }
+
+        // ============================================
+        // UNLOCK ALL PERKS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all perks/upgrades
+        /// </summary>
+        public int UnlockAllPerks()
+        {
+            int unlocked = 0;
+            var perkIds = CrabChampionsData.GetAllPerkIds();
+
+            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedPerks);
+
+            if (unlockProp is ArrayProperty ap)
+            {
+                foreach (var perkId in perkIds)
+                {
+                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == perkId) ||
+                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == perkId);
+
+                    if (!exists)
+                    {
+                        ap.Items.Add(new StrProperty { Name = "", Value = perkId });
+                        unlocked++;
+                    }
+                }
+            }
+            else
+            {
+                // Try individual perk flags
+                foreach (var perk in CrabChampionsData.Perks)
+                {
+                    var prop = FindProperty($"{perk.Id}Unlocked", $"Has{perk.Id}", $"Unlocked{perk.Id}");
+                    if (prop is BoolProperty bp && !bp.Value)
+                    {
+                        bp.Value = true;
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
     }
 
     /// <summary>
@@ -740,5 +948,35 @@ namespace UnrealSavEditor.Models
         public string WeaponsStatus => $"{UnlockedWeapons}/{TotalWeapons}";
         public string AbilitiesStatus => $"{UnlockedAbilities}/{TotalAbilities}";
         public string MeleeStatus => $"{UnlockedMelee}/{TotalMelee}";
+    }
+
+    /// <summary>
+    /// Result of applying a preset
+    /// </summary>
+    public class PresetResult
+    {
+        public string PresetName { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public int WeaponsUnlocked { get; set; }
+        public int AbilitiesUnlocked { get; set; }
+        public int MeleeUnlocked { get; set; }
+        public int DifficultiesUnlocked { get; set; }
+        public int ItemsSetPrismatic { get; set; }
+        public int MasteryMaxed { get; set; }
+        public bool CurrencyMaxed { get; set; }
+
+        public int TotalChanges => WeaponsUnlocked + AbilitiesUnlocked + MeleeUnlocked +
+                                   DifficultiesUnlocked + ItemsSetPrismatic + MasteryMaxed +
+                                   (CurrencyMaxed ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Represents a stat value for editing
+    /// </summary>
+    public class StatValue
+    {
+        public StatInfo Info { get; set; } = null!;
+        public GvasProperty Property { get; set; } = null!;
+        public double CurrentValue { get; set; }
     }
 }

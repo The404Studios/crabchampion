@@ -423,6 +423,104 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Preset Profiles Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="🎭" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Preset Profiles" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Quick apply preset configurations" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="AllUnlocks">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔓" Margin="0,0,8,0"/>
+                                        <TextBlock Text="All Unlocks"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="Prismatic">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💎" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Prismatic Collection"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="RichCrab">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💰" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Rich Crab"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding UnlockAllPerksCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⭐" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Perks"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Stats Editor Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="📊" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Stats Editor" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Modify game statistics and achievements" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding MaxAllStatsCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📈" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Max All Stats"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding SetImpressiveStatsCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🏆" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Impressive Stats"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Margin="0,0,8,8" Padding="14,10" Cursor="Hand"
+                                        Command="{Binding ResetAllStatsCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="BorderBrush" Value="#EF4444"/>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗑️" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Reset Stats"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+
+                            <!-- Stats Info -->
+                            <Border Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                                <TextBlock Style="{StaticResource LabelText}" TextWrapping="Wrap">
+                                    Stats tracked: Kills, Deaths, Bosses, Damage, Runs, Waves, Play Time, Crystals, and more.
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Quick Edit Section -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                         <StackPanel>

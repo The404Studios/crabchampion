@@ -640,6 +640,131 @@ namespace UnrealSavEditor.ViewModels
             MeleeStatus = summary.MeleeStatus;
         }
 
+        // ============================================
+        // PRESET PROFILE COMMANDS
+        // ============================================
+
+        [RelayCommand]
+        private void ApplyPreset(string presetId)
+        {
+            if (_crabSave == null) return;
+
+            var preset = CrabChampionsData.Presets.FirstOrDefault(p => p.Id == presetId);
+            if (preset == null) return;
+
+            if (preset.IsReset)
+            {
+                var result = MessageBox.Show(
+                    "This will reset your save to default. Are you sure?",
+                    "Confirm Reset",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes) return;
+            }
+
+            try
+            {
+                var presetResult = _crabSave.ApplyPreset(preset);
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                UpdateQuickEditValues();
+                RefreshTree();
+
+                StatusMessage = presetResult.TotalChanges > 0
+                    ? $"{preset.DisplayName} applied! {presetResult.TotalChanges} changes made."
+                    : $"{preset.DisplayName} - No changes needed (already applied).";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying preset: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ============================================
+        // STATS COMMANDS
+        // ============================================
+
+        [RelayCommand]
+        private void MaxAllStats()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.MaxAllStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Maxed {count} stats!" : "No stats found to modify.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error maxing stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void ResetAllStats()
+        {
+            if (_crabSave == null) return;
+
+            var result = MessageBox.Show(
+                "This will reset all your stats to zero. Are you sure?",
+                "Confirm Reset",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                int count = _crabSave.ResetAllStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Reset {count} stats to zero." : "No stats found to reset.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error resetting stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void SetImpressiveStats()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                _crabSave.SetImpressiveStats();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = "Stats set to impressive values!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error setting stats: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllPerks()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllPerks();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} perks!" : "All perks already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking perks: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         [RelayCommand]
         private void ExpandAll()
         {
