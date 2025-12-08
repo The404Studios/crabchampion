@@ -316,6 +316,63 @@ namespace UnrealSavEditor.Models
         }
 
         // ============================================
+        // ARRAY HELPER METHODS
+        // ============================================
+
+        /// <summary>
+        /// Check if an array contains a specific string value
+        /// Handles both raw strings and property objects based on InnerType
+        /// </summary>
+        private bool ArrayContainsValue(ArrayProperty ap, string value)
+        {
+            foreach (var item in ap.Items)
+            {
+                // Check raw string values (for StrProperty/NameProperty arrays)
+                if (item is string str && str == value)
+                    return true;
+
+                // Check property objects (for backwards compatibility)
+                if (item is StrProperty sp && sp.Value == value)
+                    return true;
+                if (item is NameProperty np && np.Value == value)
+                    return true;
+
+                // Check enum properties
+                if (item is EnumProperty ep && ep.Value.Contains(value))
+                    return true;
+
+                // Check string representation
+                if (item?.ToString() == value)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Add a value to an array, respecting its InnerType
+        /// </summary>
+        private void AddToArray(ArrayProperty ap, string value)
+        {
+            // For StrProperty/NameProperty arrays, add raw strings
+            if (ap.InnerType == "StrProperty" || ap.InnerType == "NameProperty" ||
+                ap.InnerType == "ObjectProperty" || ap.InnerType == "SoftObjectProperty")
+            {
+                ap.Items.Add(value);
+            }
+            // For struct arrays, we can't easily add items without knowing the struct format
+            else if (ap.InnerType == "StructProperty")
+            {
+                // Skip - adding to struct arrays requires knowing the struct format
+                return;
+            }
+            // For other types, try to add the raw value
+            else
+            {
+                ap.Items.Add(value);
+            }
+        }
+
+        // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
 
@@ -335,12 +392,11 @@ namespace UnrealSavEditor.Models
                 // Add all weapons to the array if not already present
                 foreach (var weaponId in weaponIds)
                 {
-                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == weaponId) ||
-                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == weaponId);
+                    bool exists = ArrayContainsValue(ap, weaponId);
 
                     if (!exists)
                     {
-                        ap.Items.Add(new StrProperty { Name = "", Value = weaponId });
+                        AddToArray(ap, weaponId);
                         unlocked++;
                     }
                 }
@@ -376,12 +432,11 @@ namespace UnrealSavEditor.Models
             {
                 foreach (var abilityId in abilityIds)
                 {
-                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == abilityId) ||
-                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == abilityId);
+                    bool exists = ArrayContainsValue(ap, abilityId);
 
                     if (!exists)
                     {
-                        ap.Items.Add(new StrProperty { Name = "", Value = abilityId });
+                        AddToArray(ap, abilityId);
                         unlocked++;
                     }
                 }
@@ -416,12 +471,11 @@ namespace UnrealSavEditor.Models
             {
                 foreach (var meleeId in meleeIds)
                 {
-                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == meleeId) ||
-                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == meleeId);
+                    bool exists = ArrayContainsValue(ap, meleeId);
 
                     if (!exists)
                     {
-                        ap.Items.Add(new StrProperty { Name = "", Value = meleeId });
+                        AddToArray(ap, meleeId);
                         unlocked++;
                     }
                 }
@@ -642,13 +696,11 @@ namespace UnrealSavEditor.Models
             {
                 foreach (var tier in CrabChampionsData.DifficultyTiers)
                 {
-                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == tier) ||
-                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == tier) ||
-                                  ap.Items.OfType<EnumProperty>().Any(e => e.Value.Contains(tier));
+                    bool exists = ArrayContainsValue(ap, tier);
 
                     if (!exists)
                     {
-                        ap.Items.Add(new StrProperty { Name = "", Value = tier });
+                        AddToArray(ap, tier);
                         unlocked++;
                     }
                 }
@@ -892,12 +944,11 @@ namespace UnrealSavEditor.Models
             {
                 foreach (var perkId in perkIds)
                 {
-                    bool exists = ap.Items.OfType<StrProperty>().Any(s => s.Value == perkId) ||
-                                  ap.Items.OfType<NameProperty>().Any(n => n.Value == perkId);
+                    bool exists = ArrayContainsValue(ap, perkId);
 
                     if (!exists)
                     {
-                        ap.Items.Add(new StrProperty { Name = "", Value = perkId });
+                        AddToArray(ap, perkId);
                         unlocked++;
                     }
                 }
