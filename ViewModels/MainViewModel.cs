@@ -850,6 +850,41 @@ namespace UnrealSavEditor.ViewModels
         }
 
         [RelayCommand]
+        private void DumpFullStructure()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var dump = _crabSave.DumpSaveStructure();
+
+                // Also save to a file for easier reading
+                var dumpPath = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                    "CrabChampions_SaveDump.txt");
+
+                System.IO.File.WriteAllText(dumpPath, dump);
+
+                MessageBox.Show(
+                    $"Save structure dumped!\n\nFull dump saved to:\n{dumpPath}\n\n" +
+                    "Please share this file to help fix the unlock/prismatic features.",
+                    "Save Structure Dump",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // Also show in message box (truncated)
+                if (dump.Length > 4000)
+                    dump = dump.Substring(0, 4000) + "\n\n... (truncated, see file for full dump)";
+
+                MessageBox.Show(dump, "Save Structure (Preview)", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error dumping structure: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
         private void ExpandAll()
         {
             SetExpanded(Properties, true);

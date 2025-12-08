@@ -548,11 +548,31 @@
                                         <TextBlock Text="Search Weapon Props"/>
                                     </StackPanel>
                                 </Button>
+
+                                <Button Margin="0,0,8,8" Padding="14,10" Cursor="Hand"
+                                        Command="{Binding DumpFullStructureCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="Background">
+                                                <Setter.Value>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#1E293B" Offset="0"/>
+                                                        <GradientStop Color="#7C3AED" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📦" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Dump Full Structure"/>
+                                    </StackPanel>
+                                </Button>
                             </WrapPanel>
 
                             <Border Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
                                 <TextBlock Style="{StaticResource LabelText}" TextWrapping="Wrap">
-                                    Use these tools to discover the actual property names in your save file. Report them so unlock features can be fixed!
+                                    Use "Dump Full Structure" to export all Maps, Arrays, and potential rarity values to a file. Share this to help fix unlock/prismatic features!
                                 </TextBlock>
                             </Border>
                         </StackPanel>

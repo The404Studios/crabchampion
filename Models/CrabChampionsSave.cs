@@ -429,6 +429,185 @@ namespace UnrealSavEditor.Models
             }
         }
 
+        /// <summary>
+        /// Get all MapProperty entries (used for weapon mastery/rarity usually)
+        /// </summary>
+        public List<(string Path, string KeyType, string ValueType, int Count, string Sample)> GetAllMapProperties()
+        {
+            var maps = new List<(string, string, string, int, string)>();
+            CollectMapProperties(_gvasFile.Properties, "", maps);
+            return maps;
+        }
+
+        private void CollectMapProperties(IEnumerable<GvasProperty> props, string prefix, List<(string, string, string, int, string)> maps)
+        {
+            foreach (var prop in props)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+
+                if (prop is MapProperty mp && mp.Entries != null)
+                {
+                    var sample = "";
+                    if (mp.Entries.Count > 0)
+                    {
+                        var first = mp.Entries.First();
+                        sample = $"{first.Key} -> {first.Value}";
+                    }
+                    maps.Add((fullName, mp.KeyType ?? "?", mp.ValueType ?? "?", mp.Entries.Count, sample));
+                }
+
+                if (prop is StructProperty sp)
+                {
+                    CollectMapProperties(sp.Properties, fullName, maps);
+                }
+
+                if (prop is ArrayProperty ap)
+                {
+                    foreach (var item in ap.Items.OfType<StructProperty>())
+                    {
+                        CollectMapProperties(item.Properties, $"{fullName}[]", maps);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get all ArrayProperty entries with their contents
+        /// </summary>
+        public List<(string Path, string InnerType, int Count, List<string> Samples)> GetAllArrayProperties()
+        {
+            var arrays = new List<(string, string, int, List<string>)>();
+            CollectArrayProperties(_gvasFile.Properties, "", arrays);
+            return arrays;
+        }
+
+        private void CollectArrayProperties(IEnumerable<GvasProperty> props, string prefix, List<(string, string, int, List<string>)> arrays)
+        {
+            foreach (var prop in props)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+
+                if (prop is ArrayProperty ap)
+                {
+                    var samples = new List<string>();
+                    foreach (var item in ap.Items.Take(5))
+                    {
+                        if (item is string s) samples.Add(s);
+                        else if (item is StrProperty sp) samples.Add(sp.Value);
+                        else if (item is NameProperty np) samples.Add(np.Value);
+                        else if (item is StructProperty) samples.Add("[Struct]");
+                        else samples.Add(item?.ToString() ?? "null");
+                    }
+                    arrays.Add((fullName, ap.InnerType ?? "?", ap.Items.Count, samples));
+
+                    // Also check inside struct arrays
+                    foreach (var item in ap.Items.OfType<StructProperty>())
+                    {
+                        CollectArrayProperties(item.Properties, $"{fullName}[]", arrays);
+                    }
+                }
+
+                if (prop is StructProperty structProp)
+                {
+                    CollectArrayProperties(structProp.Properties, fullName, arrays);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get all small integer values (0-10) that could be rarity/mastery levels
+        /// </summary>
+        public List<(string Path, int Value)> GetPotentialRarityValues()
+        {
+            var values = new List<(string, int)>();
+            CollectSmallInts(_gvasFile.Properties, "", values);
+            return values;
+        }
+
+        private void CollectSmallInts(IEnumerable<GvasProperty> props, string prefix, List<(string, int)> values)
+        {
+            foreach (var prop in props)
+            {
+                var fullName = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
+
+                // Look for small integers that could be rarity indices (0-10 range)
+                if (prop is IntProperty ip && ip.Value >= 0 && ip.Value <= 10)
+                {
+                    values.Add((fullName, ip.Value));
+                }
+                else if (prop is ByteProperty bp && bp.ByteValue <= 10)
+                {
+                    values.Add((fullName, bp.ByteValue));
+                }
+
+                if (prop is StructProperty sp)
+                {
+                    CollectSmallInts(sp.Properties, fullName, values);
+                }
+
+                if (prop is ArrayProperty ap)
+                {
+                    foreach (var item in ap.Items.OfType<StructProperty>())
+                    {
+                        CollectSmallInts(item.Properties, $"{fullName}[]", values);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Dump complete save structure in a readable format
+        /// </summary>
+        public string DumpSaveStructure()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== CRAB CHAMPIONS SAVE STRUCTURE ===\n");
+            sb.AppendLine($"Save Class: {_gvasFile.SaveGameClassName}");
+            sb.AppendLine($"Total Top-Level Properties: {_gvasFile.Properties.Count}\n");
+
+            // Maps (likely weapon/ability rarity storage)
+            var maps = GetAllMapProperties();
+            sb.AppendLine($"--- MAP PROPERTIES ({maps.Count}) ---");
+            sb.AppendLine("(These often store weapon rarity/mastery)");
+            foreach (var (path, keyType, valueType, count, sample) in maps)
+            {
+                sb.AppendLine($"  {path}");
+                sb.AppendLine($"    Type: Map<{keyType}, {valueType}>, Count: {count}");
+                if (!string.IsNullOrEmpty(sample))
+                    sb.AppendLine($"    Sample: {sample}");
+            }
+
+            // Arrays (likely unlock lists)
+            var arrays = GetAllArrayProperties();
+            sb.AppendLine($"\n--- ARRAY PROPERTIES ({arrays.Count}) ---");
+            sb.AppendLine("(These often store unlocked items)");
+            foreach (var (path, innerType, count, samples) in arrays)
+            {
+                sb.AppendLine($"  {path}");
+                sb.AppendLine($"    Type: Array<{innerType}>, Count: {count}");
+                if (samples.Count > 0)
+                    sb.AppendLine($"    Items: {string.Join(", ", samples)}");
+            }
+
+            // Small integers (potential rarity values)
+            var rarities = GetPotentialRarityValues();
+            var relevantRarities = rarities.Where(r =>
+                r.Path.ToLowerInvariant().Contains("rarity") ||
+                r.Path.ToLowerInvariant().Contains("tier") ||
+                r.Path.ToLowerInvariant().Contains("level") ||
+                r.Path.ToLowerInvariant().Contains("mastery") ||
+                r.Path.ToLowerInvariant().Contains("rank")).ToList();
+
+            sb.AppendLine($"\n--- POTENTIAL RARITY/MASTERY VALUES ---");
+            sb.AppendLine("(Small integers 0-10 in rarity/tier/level/mastery properties)");
+            foreach (var (path, value) in relevantRarities.Take(30))
+            {
+                sb.AppendLine($"  {path} = {value}");
+            }
+
+            return sb.ToString();
+        }
+
         // ============================================
         // ARRAY HELPER METHODS (READ-ONLY)
         // ============================================
