@@ -430,12 +430,14 @@ namespace UnrealSavEditor.Models
         }
 
         // ============================================
-        // ARRAY HELPER METHODS
+        // ARRAY HELPER METHODS (READ-ONLY)
         // ============================================
+        // NOTE: We intentionally do NOT have an AddToArray method.
+        // Adding items to arrays without fully understanding the save format
+        // can corrupt saves and cause items to be relocked.
 
         /// <summary>
-        /// Check if an array contains a specific string value
-        /// Handles both raw strings and property objects based on InnerType
+        /// Check if an array contains a specific string value (for reading only)
         /// </summary>
         private bool ArrayContainsValue(ArrayProperty ap, string value)
         {
@@ -445,7 +447,7 @@ namespace UnrealSavEditor.Models
                 if (item is string str && str == value)
                     return true;
 
-                // Check property objects (for backwards compatibility)
+                // Check property objects
                 if (item is StrProperty sp && sp.Value == value)
                     return true;
                 if (item is NameProperty np && np.Value == value)
@@ -462,70 +464,31 @@ namespace UnrealSavEditor.Models
             return false;
         }
 
-        /// <summary>
-        /// Add a value to an array, respecting its InnerType
-        /// </summary>
-        private void AddToArray(ArrayProperty ap, string value)
-        {
-            // For StrProperty/NameProperty arrays, add raw strings
-            if (ap.InnerType == "StrProperty" || ap.InnerType == "NameProperty" ||
-                ap.InnerType == "ObjectProperty" || ap.InnerType == "SoftObjectProperty")
-            {
-                ap.Items.Add(value);
-            }
-            // For struct arrays, we can't easily add items without knowing the struct format
-            else if (ap.InnerType == "StructProperty")
-            {
-                // Skip - adding to struct arrays requires knowing the struct format
-                return;
-            }
-            // For other types, try to add the raw value
-            else
-            {
-                ap.Items.Add(value);
-            }
-        }
-
         // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
+        // IMPORTANT: These methods are READ-SAFE - they only modify existing properties.
+        // We NEVER add items to arrays because we don't fully understand the save format.
+        // This prevents corrupting saves that already have unlocked items.
 
         /// <summary>
-        /// Unlock all primary weapons
+        /// Unlock all primary weapons by setting boolean flags to true.
+        /// Does NOT modify arrays to prevent save corruption.
         /// </summary>
         public int UnlockAllWeapons()
         {
             int unlocked = 0;
-            var weaponIds = CrabChampionsData.GetAllWeaponIds();
 
-            // Find the unlocked weapons array
-            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedWeapons);
-
-            if (unlockProp is ArrayProperty ap)
+            // Only modify boolean unlock flags - NEVER add to arrays
+            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
             {
-                // Add all weapons to the array if not already present
-                foreach (var weaponId in weaponIds)
+                // Try various property naming patterns
+                var prop = FindProperty($"{weapon.Id}Unlocked", $"Unlocked{weapon.Id}",
+                    $"Has{weapon.Id}", $"{weapon.Id}_Unlocked", $"b{weapon.Id}Unlocked");
+                if (prop is BoolProperty bp && !bp.Value)
                 {
-                    bool exists = ArrayContainsValue(ap, weaponId);
-
-                    if (!exists)
-                    {
-                        AddToArray(ap, weaponId);
-                        unlocked++;
-                    }
-                }
-            }
-            else
-            {
-                // Try to find and set boolean unlock flags
-                foreach (var weapon in CrabChampionsData.PrimaryWeapons)
-                {
-                    var prop = FindProperty($"{weapon.Id}Unlocked", $"Unlocked{weapon.Id}", $"Has{weapon.Id}");
-                    if (prop is BoolProperty bp && !bp.Value)
-                    {
-                        bp.Value = true;
-                        unlocked++;
-                    }
+                    bp.Value = true;
+                    unlocked++;
                 }
             }
 
@@ -533,38 +496,22 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all secondary weapons/abilities (grenades, grappling hook, etc.)
+        /// Unlock all secondary weapons/abilities by setting boolean flags to true.
+        /// Does NOT modify arrays to prevent save corruption.
         /// </summary>
         public int UnlockAllAbilities()
         {
             int unlocked = 0;
-            var abilityIds = CrabChampionsData.GetAllAbilityIds();
 
-            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedAbilities);
-
-            if (unlockProp is ArrayProperty ap)
+            // Only modify boolean unlock flags - NEVER add to arrays
+            foreach (var ability in CrabChampionsData.SecondaryWeapons)
             {
-                foreach (var abilityId in abilityIds)
+                var prop = FindProperty($"{ability.Id}Unlocked", $"Unlocked{ability.Id}",
+                    $"Has{ability.Id}", $"{ability.Id}_Unlocked", $"b{ability.Id}Unlocked");
+                if (prop is BoolProperty bp && !bp.Value)
                 {
-                    bool exists = ArrayContainsValue(ap, abilityId);
-
-                    if (!exists)
-                    {
-                        AddToArray(ap, abilityId);
-                        unlocked++;
-                    }
-                }
-            }
-            else
-            {
-                foreach (var ability in CrabChampionsData.SecondaryWeapons)
-                {
-                    var prop = FindProperty($"{ability.Id}Unlocked", $"Unlocked{ability.Id}", $"Has{ability.Id}");
-                    if (prop is BoolProperty bp && !bp.Value)
-                    {
-                        bp.Value = true;
-                        unlocked++;
-                    }
+                    bp.Value = true;
+                    unlocked++;
                 }
             }
 
@@ -572,38 +519,22 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all melee weapons
+        /// Unlock all melee weapons by setting boolean flags to true.
+        /// Does NOT modify arrays to prevent save corruption.
         /// </summary>
         public int UnlockAllMelee()
         {
             int unlocked = 0;
-            var meleeIds = CrabChampionsData.GetAllMeleeIds();
 
-            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedMelee);
-
-            if (unlockProp is ArrayProperty ap)
+            // Only modify boolean unlock flags - NEVER add to arrays
+            foreach (var melee in CrabChampionsData.MeleeWeapons)
             {
-                foreach (var meleeId in meleeIds)
+                var prop = FindProperty($"{melee.Id}Unlocked", $"Unlocked{melee.Id}",
+                    $"Has{melee.Id}", $"{melee.Id}_Unlocked", $"b{melee.Id}Unlocked");
+                if (prop is BoolProperty bp && !bp.Value)
                 {
-                    bool exists = ArrayContainsValue(ap, meleeId);
-
-                    if (!exists)
-                    {
-                        AddToArray(ap, meleeId);
-                        unlocked++;
-                    }
-                }
-            }
-            else
-            {
-                foreach (var melee in CrabChampionsData.MeleeWeapons)
-                {
-                    var prop = FindProperty($"{melee.Id}Unlocked", $"Unlocked{melee.Id}", $"Has{melee.Id}");
-                    if (prop is BoolProperty bp && !bp.Value)
-                    {
-                        bp.Value = true;
-                        unlocked++;
-                    }
+                    bp.Value = true;
+                    unlocked++;
                 }
             }
 
@@ -798,38 +729,22 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all difficulty tiers
+        /// Unlock all difficulty tiers by setting boolean flags to true.
+        /// Does NOT modify arrays to prevent save corruption.
         /// </summary>
         public int UnlockAllDifficulties()
         {
             int unlocked = 0;
 
-            var diffProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedDifficulties);
-
-            if (diffProp is ArrayProperty ap)
+            // Only modify boolean unlock flags - NEVER add to arrays
+            foreach (var tier in CrabChampionsData.DifficultyTiers)
             {
-                foreach (var tier in CrabChampionsData.DifficultyTiers)
+                var prop = FindProperty($"{tier}Unlocked", $"Unlocked{tier}",
+                    $"Has{tier}Difficulty", $"{tier}_Unlocked", $"b{tier}Unlocked");
+                if (prop is BoolProperty bp && !bp.Value)
                 {
-                    bool exists = ArrayContainsValue(ap, tier);
-
-                    if (!exists)
-                    {
-                        AddToArray(ap, tier);
-                        unlocked++;
-                    }
-                }
-            }
-            else
-            {
-                // Try individual difficulty unlock flags
-                foreach (var tier in CrabChampionsData.DifficultyTiers)
-                {
-                    var prop = FindProperty($"{tier}Unlocked", $"Unlocked{tier}", $"Has{tier}Difficulty");
-                    if (prop is BoolProperty bp && !bp.Value)
-                    {
-                        bp.Value = true;
-                        unlocked++;
-                    }
+                    bp.Value = true;
+                    unlocked++;
                 }
             }
 
@@ -1045,39 +960,22 @@ namespace UnrealSavEditor.Models
         // ============================================
 
         /// <summary>
-        /// Unlock all perks/upgrades
+        /// Unlock all perks/upgrades by setting boolean flags to true.
+        /// Does NOT modify arrays to prevent save corruption.
         /// </summary>
         public int UnlockAllPerks()
         {
             int unlocked = 0;
-            var perkIds = CrabChampionsData.GetAllPerkIds();
 
-            var unlockProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedPerks);
-
-            if (unlockProp is ArrayProperty ap)
+            // Only modify boolean unlock flags - NEVER add to arrays
+            foreach (var perk in CrabChampionsData.Perks)
             {
-                foreach (var perkId in perkIds)
+                var prop = FindProperty($"{perk.Id}Unlocked", $"Has{perk.Id}",
+                    $"Unlocked{perk.Id}", $"{perk.Id}_Unlocked", $"b{perk.Id}Unlocked");
+                if (prop is BoolProperty bp && !bp.Value)
                 {
-                    bool exists = ArrayContainsValue(ap, perkId);
-
-                    if (!exists)
-                    {
-                        AddToArray(ap, perkId);
-                        unlocked++;
-                    }
-                }
-            }
-            else
-            {
-                // Try individual perk flags
-                foreach (var perk in CrabChampionsData.Perks)
-                {
-                    var prop = FindProperty($"{perk.Id}Unlocked", $"Has{perk.Id}", $"Unlocked{perk.Id}");
-                    if (prop is BoolProperty bp && !bp.Value)
-                    {
-                        bp.Value = true;
-                        unlocked++;
-                    }
+                    bp.Value = true;
+                    unlocked++;
                 }
             }
 
