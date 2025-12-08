@@ -729,58 +729,46 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Set all weapons to prismatic rarity (highest tier)
+        /// Set all weapons/abilities/melee to prismatic rarity.
+        /// Uses the RankedWeapons array which contains all ranked items.
         /// </summary>
         public int SetAllWeaponsToPrismatic()
         {
+            return SetAllRankedItemsToPrismatic();
+        }
+
+        /// <summary>
+        /// Set all ranked items to Prismatic rank.
+        /// The game stores all weapon/ability/melee ranks in the RankedWeapons array.
+        /// Each entry has: Weapon (ObjectProperty) and Rank (EnumProperty ECrabRank)
+        /// </summary>
+        public int SetAllRankedItemsToPrismatic()
+        {
             int modified = 0;
-            int prismaticIndex = CrabChampionsData.GetPrismaticRarityIndex();
+            const string prismaticRank = "ECrabRank::Prismatic";
 
-            // Look for weapon mastery/rarity maps or arrays
-            var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.WeaponMastery);
+            // Find the RankedWeapons array - this contains ALL ranked items (weapons, abilities, melee)
+            var rankedProp = FindProperty("RankedWeapons", "rankedweapons");
 
-            if (masteryProp is MapProperty mp && mp.Entries != null)
+            if (rankedProp is ArrayProperty ap)
             {
-                foreach (var kvp in mp.Entries.ToList())
+                foreach (var item in ap.Items)
                 {
-                    if (kvp.Value is IntProperty ip && ip.Value != prismaticIndex)
+                    // Each item is a StructProperty containing Weapon and Rank
+                    if (item is StructProperty sp)
                     {
-                        ip.Value = prismaticIndex;
-                        modified++;
-                    }
-                    else if (kvp.Value is ByteProperty bp)
-                    {
-                        bp.ByteValue = (byte)prismaticIndex;
-                        modified++;
-                    }
-                    else if (kvp.Value is int intVal && intVal != prismaticIndex)
-                    {
-                        mp.Entries[kvp.Key] = prismaticIndex;
-                        modified++;
-                    }
-                }
-            }
+                        // Find the Rank property within this struct
+                        var rankProp = sp.Properties.FirstOrDefault(p =>
+                            p.Name.Equals("Rank", StringComparison.OrdinalIgnoreCase));
 
-            // Also try individual weapon rarity properties
-            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
-            {
-                var rarityProp = FindProperty($"{weapon.Id}Rarity", $"{weapon.Id}Mastery", $"{weapon.Id}Level", $"{weapon.Id}Tier");
-                if (rarityProp != null)
-                {
-                    if (rarityProp is IntProperty ip && ip.Value != prismaticIndex)
-                    {
-                        ip.Value = prismaticIndex;
-                        modified++;
-                    }
-                    else if (rarityProp is ByteProperty byp)
-                    {
-                        byp.ByteValue = (byte)prismaticIndex;
-                        modified++;
-                    }
-                    else if (rarityProp is EnumProperty ep)
-                    {
-                        ep.Value = "Prismatic";
-                        modified++;
+                        if (rankProp is EnumProperty ep)
+                        {
+                            if (ep.Value != prismaticRank)
+                            {
+                                ep.Value = prismaticRank;
+                                modified++;
+                            }
+                        }
                     }
                 }
             }
@@ -789,61 +777,13 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Set all abilities to prismatic rarity
+        /// Set all abilities to prismatic rarity (uses same RankedWeapons array)
         /// </summary>
         public int SetAllAbilitiesToPrismatic()
         {
-            int modified = 0;
-            int prismaticIndex = CrabChampionsData.GetPrismaticRarityIndex();
-
-            var masteryProp = FindProperty(CrabChampionsData.PropertyPatterns.AbilityMastery);
-
-            if (masteryProp is MapProperty mp && mp.Entries != null)
-            {
-                foreach (var kvp in mp.Entries.ToList())
-                {
-                    if (kvp.Value is IntProperty ip)
-                    {
-                        ip.Value = prismaticIndex;
-                        modified++;
-                    }
-                    else if (kvp.Value is ByteProperty bp)
-                    {
-                        bp.ByteValue = (byte)prismaticIndex;
-                        modified++;
-                    }
-                    else if (kvp.Value is int intVal && intVal != prismaticIndex)
-                    {
-                        mp.Entries[kvp.Key] = prismaticIndex;
-                        modified++;
-                    }
-                }
-            }
-
-            foreach (var ability in CrabChampionsData.SecondaryWeapons)
-            {
-                var rarityProp = FindProperty($"{ability.Id}Rarity", $"{ability.Id}Mastery", $"{ability.Id}Level");
-                if (rarityProp != null)
-                {
-                    if (rarityProp is IntProperty ip)
-                    {
-                        ip.Value = prismaticIndex;
-                        modified++;
-                    }
-                    else if (rarityProp is ByteProperty byp)
-                    {
-                        byp.ByteValue = (byte)prismaticIndex;
-                        modified++;
-                    }
-                    else if (rarityProp is EnumProperty ep)
-                    {
-                        ep.Value = "Prismatic";
-                        modified++;
-                    }
-                }
-            }
-
-            return modified;
+            // Abilities are also stored in RankedWeapons, so this is handled by SetAllRankedItemsToPrismatic
+            // Return 0 to avoid double-counting
+            return 0;
         }
 
         /// <summary>
@@ -851,7 +791,8 @@ namespace UnrealSavEditor.Models
         /// </summary>
         public int SetAllToPrismatic()
         {
-            return SetAllWeaponsToPrismatic() + SetAllAbilitiesToPrismatic();
+            // All ranked items (weapons, abilities, melee) are in RankedWeapons array
+            return SetAllRankedItemsToPrismatic();
         }
 
         /// <summary>
