@@ -277,7 +277,7 @@
                             </StackPanel>
 
                             <!-- God Mode Button - The Big One -->
-                            <Border Background="Linear Gradient" CornerRadius="12" Margin="0,0,0,20">
+                            <Border CornerRadius="12" Margin="0,0,0,20">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                         <GradientStop Color="#F97316" Offset="0"/>
