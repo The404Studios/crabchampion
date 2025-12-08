@@ -63,24 +63,26 @@ namespace UnrealSavEditor.Models
 
         // ============================================
         // SECONDARY WEAPONS / ABILITIES (5 total)
+        // Asset type is "Grenade" in game files
         // ============================================
         public static readonly WeaponInfo[] SecondaryWeapons =
         {
-            new("Grenade", "Grenade", "Explosive", true),
-            new("GrapplingHook", "Grappling Hook", "Utility", false),
-            new("LaserBeam", "Laser Beam", "Energy", false),
-            new("ElectroGlobe", "Electro Globe", "Energy", false),
-            new("Shockwave", "Shockwave", "Area", false),
+            new("Grenade", "Grenade", "Explosive", true, "Grenade"),
+            new("GrapplingHook", "Grappling Hook", "Utility", false, "Grenade"),
+            new("LaserBeam", "Laser Beam", "Energy", false, "Grenade"),
+            new("ElectroGlobe", "Electro Globe", "Energy", false, "Grenade"),
+            new("Shockwave", "Shockwave", "Area", false, "Grenade"),
         };
 
         // ============================================
         // MELEE WEAPONS (3 total)
+        // Asset type is "Melee" in game files
         // ============================================
         public static readonly WeaponInfo[] MeleeWeapons =
         {
-            new("Claws", "Claws", "Melee", true),
-            new("Sword", "Sword", "Melee", false),
-            new("Hammer", "Hammer", "Melee", false),
+            new("Claws", "Claws", "Melee", true, "Melee"),
+            new("Sword", "Sword", "Melee", false, "Melee"),
+            new("Hammer", "Hammer", "Melee", false, "Melee"),
         };
 
         // ============================================
@@ -324,6 +326,36 @@ namespace UnrealSavEditor.Models
             foreach (var p in Perks) ids.Add(p.Id);
             return ids;
         }
+
+        /// <summary>
+        /// Get all weapon asset paths for unlocking
+        /// </summary>
+        public static List<string> GetAllWeaponAssetPaths()
+        {
+            var paths = new List<string>();
+            foreach (var w in PrimaryWeapons) paths.Add(w.AssetPath);
+            return paths;
+        }
+
+        /// <summary>
+        /// Get all ability asset paths for unlocking
+        /// </summary>
+        public static List<string> GetAllAbilityAssetPaths()
+        {
+            var paths = new List<string>();
+            foreach (var a in SecondaryWeapons) paths.Add(a.AssetPath);
+            return paths;
+        }
+
+        /// <summary>
+        /// Get all melee asset paths for unlocking
+        /// </summary>
+        public static List<string> GetAllMeleeAssetPaths()
+        {
+            var paths = new List<string>();
+            foreach (var m in MeleeWeapons) paths.Add(m.AssetPath);
+            return paths;
+        }
     }
 
     /// <summary>
@@ -335,13 +367,25 @@ namespace UnrealSavEditor.Models
         public string DisplayName { get; }
         public string Category { get; }
         public bool IsStarterWeapon { get; }
+        public string AssetPath { get; }
 
-        public WeaponInfo(string id, string displayName, string category, bool isStarter)
+        public WeaponInfo(string id, string displayName, string category, bool isStarter, string assetType = "Weapon")
         {
             Id = id;
             DisplayName = displayName;
             Category = category;
             IsStarterWeapon = isStarter;
+            // Asset path format: /Game/Blueprint/{Type}/{Id}/DA_{Type}_{Id}.DA_{Type}_{Id}
+            AssetPath = $"/Game/Blueprint/{assetType}/{id}/DA_{assetType}_{id}.DA_{assetType}_{id}";
+        }
+
+        public WeaponInfo(string id, string displayName, string category, bool isStarter, string assetPath, bool customPath)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Category = category;
+            IsStarterWeapon = isStarter;
+            AssetPath = assetPath;
         }
     }
 

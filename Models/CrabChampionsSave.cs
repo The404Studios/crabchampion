@@ -646,28 +646,45 @@ namespace UnrealSavEditor.Models
         // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
-        // IMPORTANT: These methods are READ-SAFE - they only modify existing properties.
-        // We NEVER add items to arrays because we don't fully understand the save format.
-        // This prevents corrupting saves that already have unlocked items.
+        // These methods properly add items to the game's unlock arrays.
+        // The game uses ObjectProperty arrays with asset paths like:
+        // /Game/Blueprint/Weapon/{Id}/DA_Weapon_{Id}.DA_Weapon_{Id}
 
         /// <summary>
-        /// Unlock all primary weapons by setting boolean flags to true.
-        /// Does NOT modify arrays to prevent save corruption.
+        /// Check if an array already contains a path (case-insensitive check)
+        /// </summary>
+        private bool ArrayContainsPath(ArrayProperty ap, string path)
+        {
+            var pathLower = path.ToLowerInvariant();
+            foreach (var item in ap.Items)
+            {
+                var itemStr = item?.ToString()?.ToLowerInvariant();
+                if (itemStr == pathLower)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Unlock all primary weapons by adding to UnlockedWeapons array.
         /// </summary>
         public int UnlockAllWeapons()
         {
             int unlocked = 0;
 
-            // Only modify boolean unlock flags - NEVER add to arrays
-            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+            // Find the UnlockedWeapons array
+            var unlockedProp = FindProperty("UnlockedWeapons", "unlockedweapons");
+
+            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
             {
-                // Try various property naming patterns
-                var prop = FindProperty($"{weapon.Id}Unlocked", $"Unlocked{weapon.Id}",
-                    $"Has{weapon.Id}", $"{weapon.Id}_Unlocked", $"b{weapon.Id}Unlocked");
-                if (prop is BoolProperty bp && !bp.Value)
+                foreach (var weapon in CrabChampionsData.PrimaryWeapons)
                 {
-                    bp.Value = true;
-                    unlocked++;
+                    // Check if already unlocked
+                    if (!ArrayContainsPath(ap, weapon.AssetPath))
+                    {
+                        ap.Items.Add(weapon.AssetPath);
+                        unlocked++;
+                    }
                 }
             }
 
@@ -675,22 +692,24 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all secondary weapons/abilities by setting boolean flags to true.
-        /// Does NOT modify arrays to prevent save corruption.
+        /// Unlock all secondary weapons/abilities by adding to UnlockedAbilities array.
         /// </summary>
         public int UnlockAllAbilities()
         {
             int unlocked = 0;
 
-            // Only modify boolean unlock flags - NEVER add to arrays
-            foreach (var ability in CrabChampionsData.SecondaryWeapons)
+            // Find the UnlockedAbilities array
+            var unlockedProp = FindProperty("UnlockedAbilities", "unlockedabilities");
+
+            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
             {
-                var prop = FindProperty($"{ability.Id}Unlocked", $"Unlocked{ability.Id}",
-                    $"Has{ability.Id}", $"{ability.Id}_Unlocked", $"b{ability.Id}Unlocked");
-                if (prop is BoolProperty bp && !bp.Value)
+                foreach (var ability in CrabChampionsData.SecondaryWeapons)
                 {
-                    bp.Value = true;
-                    unlocked++;
+                    if (!ArrayContainsPath(ap, ability.AssetPath))
+                    {
+                        ap.Items.Add(ability.AssetPath);
+                        unlocked++;
+                    }
                 }
             }
 
@@ -698,22 +717,24 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all melee weapons by setting boolean flags to true.
-        /// Does NOT modify arrays to prevent save corruption.
+        /// Unlock all melee weapons by adding to UnlockedMeleeWeapons array.
         /// </summary>
         public int UnlockAllMelee()
         {
             int unlocked = 0;
 
-            // Only modify boolean unlock flags - NEVER add to arrays
-            foreach (var melee in CrabChampionsData.MeleeWeapons)
+            // Find the UnlockedMeleeWeapons array
+            var unlockedProp = FindProperty("UnlockedMeleeWeapons", "unlockedmeleeweapons");
+
+            if (unlockedProp is ArrayProperty ap && ap.InnerType == "ObjectProperty")
             {
-                var prop = FindProperty($"{melee.Id}Unlocked", $"Unlocked{melee.Id}",
-                    $"Has{melee.Id}", $"{melee.Id}_Unlocked", $"b{melee.Id}Unlocked");
-                if (prop is BoolProperty bp && !bp.Value)
+                foreach (var melee in CrabChampionsData.MeleeWeapons)
                 {
-                    bp.Value = true;
-                    unlocked++;
+                    if (!ArrayContainsPath(ap, melee.AssetPath))
+                    {
+                        ap.Items.Add(melee.AssetPath);
+                        unlocked++;
+                    }
                 }
             }
 
@@ -721,11 +742,136 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
-        /// Unlock all items (weapons, abilities, melee)
+        /// Unlock all items (weapons, abilities, melee) and optionally add to RankedWeapons
         /// </summary>
         public (int weapons, int abilities, int melee) UnlockAll()
         {
-            return (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
+            var result = (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
+            // Also ensure items are in RankedWeapons array for ranks to work
+            EnsureAllInRankedWeapons();
+            return result;
+        }
+
+        /// <summary>
+        /// Get count of currently unlocked weapons
+        /// </summary>
+        public int GetUnlockedWeaponsCount()
+        {
+            var unlockedProp = FindProperty("UnlockedWeapons", "unlockedweapons");
+            if (unlockedProp is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Get count of currently unlocked abilities
+        /// </summary>
+        public int GetUnlockedAbilitiesCount()
+        {
+            var unlockedProp = FindProperty("UnlockedAbilities", "unlockedabilities");
+            if (unlockedProp is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Get count of currently unlocked melee weapons
+        /// </summary>
+        public int GetUnlockedMeleeCount()
+        {
+            var unlockedProp = FindProperty("UnlockedMeleeWeapons", "unlockedmeleeweapons");
+            if (unlockedProp is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Get count of items in RankedWeapons array
+        /// </summary>
+        public int GetRankedItemsCount()
+        {
+            var rankedProp = FindProperty("RankedWeapons", "rankedweapons");
+            if (rankedProp is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Ensure all known weapons are in the RankedWeapons array (needed for ranks to work)
+        /// </summary>
+        public int EnsureAllInRankedWeapons()
+        {
+            int added = 0;
+            var rankedProp = FindProperty("RankedWeapons", "rankedweapons");
+
+            if (rankedProp is not ArrayProperty ap || ap.InnerType != "StructProperty")
+                return 0;
+
+            // Get all existing weapon paths in RankedWeapons
+            var existingPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in ap.Items)
+            {
+                if (item is StructProperty sp)
+                {
+                    var weaponProp = sp.Properties.FirstOrDefault(p =>
+                        p.Name.Equals("Weapon", StringComparison.OrdinalIgnoreCase));
+                    if (weaponProp is ObjectProperty op)
+                        existingPaths.Add(op.Value);
+                    else if (weaponProp != null)
+                        existingPaths.Add(weaponProp.GetValue()?.ToString() ?? "");
+                }
+            }
+
+            // Add missing weapons
+            foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+            {
+                if (!existingPaths.Contains(weapon.AssetPath))
+                {
+                    AddToRankedWeapons(ap, weapon.AssetPath, "ECrabRank::Bronze");
+                    added++;
+                }
+            }
+
+            // Add missing abilities
+            foreach (var ability in CrabChampionsData.SecondaryWeapons)
+            {
+                if (!existingPaths.Contains(ability.AssetPath))
+                {
+                    AddToRankedWeapons(ap, ability.AssetPath, "ECrabRank::Bronze");
+                    added++;
+                }
+            }
+
+            // Add missing melee
+            foreach (var melee in CrabChampionsData.MeleeWeapons)
+            {
+                if (!existingPaths.Contains(melee.AssetPath))
+                {
+                    AddToRankedWeapons(ap, melee.AssetPath, "ECrabRank::Bronze");
+                    added++;
+                }
+            }
+
+            return added;
+        }
+
+        /// <summary>
+        /// Add a weapon to the RankedWeapons array with the given rank
+        /// </summary>
+        private void AddToRankedWeapons(ArrayProperty rankedArray, string weaponPath, string rank)
+        {
+            // Create a new struct property matching the RankedWeapons entry format
+            var structProp = new StructProperty
+            {
+                Name = "",
+                StructType = rankedArray.StructType ?? "",
+                Properties = new List<GvasProperty>
+                {
+                    new ObjectProperty { Name = "Weapon", Value = weaponPath },
+                    new EnumProperty { Name = "Rank", EnumType = "ECrabRank", Value = rank }
+                }
+            };
+            rankedArray.Items.Add(structProp);
         }
 
         /// <summary>
@@ -896,18 +1042,13 @@ namespace UnrealSavEditor.Models
             summary.TotalMelee = CrabChampionsData.MeleeWeapons.Length;
             summary.TotalDifficulties = CrabChampionsData.DifficultyTiers.Length;
 
-            // Try to count unlocked items
-            var weaponProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedWeapons);
-            if (weaponProp is ArrayProperty wap)
-                summary.UnlockedWeapons = wap.Items.Count;
+            // Get actual unlock counts from arrays
+            summary.UnlockedWeapons = GetUnlockedWeaponsCount();
+            summary.UnlockedAbilities = GetUnlockedAbilitiesCount();
+            summary.UnlockedMelee = GetUnlockedMeleeCount();
 
-            var abilityProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedAbilities);
-            if (abilityProp is ArrayProperty aap)
-                summary.UnlockedAbilities = aap.Items.Count;
-
-            var meleeProp = FindProperty(CrabChampionsData.PropertyPatterns.UnlockedMelee);
-            if (meleeProp is ArrayProperty map)
-                summary.UnlockedMelee = map.Items.Count;
+            // Also get ranked items count for additional info
+            summary.RankedItems = GetRankedItemsCount();
 
             return summary;
         }
@@ -1127,10 +1268,13 @@ namespace UnrealSavEditor.Models
         public int UnlockedMelee { get; set; }
         public int TotalMelee { get; set; }
         public int TotalDifficulties { get; set; }
+        public int RankedItems { get; set; }
 
         public string WeaponsStatus => $"{UnlockedWeapons}/{TotalWeapons}";
         public string AbilitiesStatus => $"{UnlockedAbilities}/{TotalAbilities}";
         public string MeleeStatus => $"{UnlockedMelee}/{TotalMelee}";
+        public int TotalUnlocked => UnlockedWeapons + UnlockedAbilities + UnlockedMelee;
+        public int TotalItems => TotalWeapons + TotalAbilities + TotalMelee;
     }
 
     /// <summary>
