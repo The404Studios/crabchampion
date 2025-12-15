@@ -13,6 +13,16 @@
     <Description>A beautiful SAV file editor for Unreal Engine games</Description>
   </PropertyGroup>
 
+  <!-- Exclude CrabTrainer subfolder - it's a separate project -->
+  <ItemGroup>
+    <Compile Remove="CrabTrainer\**" />
+    <Content Remove="CrabTrainer\**" />
+    <EmbeddedResource Remove="CrabTrainer\**" />
+    <None Remove="CrabTrainer\**" />
+    <Page Remove="CrabTrainer\**" />
+    <ApplicationDefinition Remove="CrabTrainer\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
