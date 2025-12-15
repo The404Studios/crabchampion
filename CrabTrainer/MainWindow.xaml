@@ -1,0 +1,346 @@
+<Window x:Class="CrabTrainer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:CrabTrainer.ViewModels"
+        Title="Crab Champions Trainer"
+        Height="700" Width="900"
+        MinHeight="500" MinWidth="700"
+        WindowStartupLocation="CenterScreen"
+        Background="#1a1a2e">
+
+    <Window.DataContext>
+        <vm:TrainerViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- Dark Theme Styles -->
+        <Style x:Key="HeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#ff6b6b"/>
+        </Style>
+
+        <Style x:Key="SubText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#94a3b8"/>
+        </Style>
+
+        <Style x:Key="BodyText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#ff6b6b"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#ff5252"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#4a4a6a"/>
+                    <Setter Property="Foreground" Value="#64748b"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#4a4a6a"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#3a3a5a"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+            <Setter Property="BorderBrush" Value="#4a4a6a"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CaretBrush" Value="#ff6b6b"/>
+        </Style>
+
+        <Style x:Key="ModernComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+            <Setter Property="BorderBrush" Value="#4a4a6a"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="#252538"/>
+            <Setter Property="BorderBrush" Value="#3a3a5a"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="🦀" FontSize="32" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Crab Champions Trainer" Style="{StaticResource HeaderText}"/>
+                        <TextBlock Text="Real-time memory editor for testing" Style="{StaticResource SubText}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#2a2a4a" CornerRadius="6" Padding="12,6" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding ProcessInfo}" Style="{StaticResource BodyText}"/>
+                    </Border>
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding AttachCommand}">
+                        <Button.Content>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Attach"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAttached}" Value="True">
+                                                <Setter Property="Text" Value="Detach"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Quick Actions -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Quick Actions" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,0,0,12"/>
+                <WrapPanel>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding QuickHealthCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="❤️" Margin="0,0,8,0"/>
+                            <TextBlock Text="Find Health"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding QuickCrystalsCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💎" Margin="0,0,8,0"/>
+                            <TextBlock Text="Find Crystals"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetHealthMaxCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💖" Margin="0,0,8,0"/>
+                            <TextBlock Text="Max Health (Freeze)"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetCrystalsMaxCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💰" Margin="0,0,8,0"/>
+                            <TextBlock Text="Max Crystals"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Search and Results -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,16,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Search Controls -->
+                    <TextBlock Grid.Row="0" Text="Memory Search" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0" Text="{Binding SearchValue, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBox}" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding SearchTypes}" SelectedItem="{Binding SearchType}"
+                                  Style="{StaticResource ModernComboBox}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="Search" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SearchCommand}" IsEnabled="{Binding IsAttached}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="3" Content="Filter" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding FilterResultsCommand}" IsEnabled="{Binding IsAttached}"/>
+                    </Grid>
+
+                    <!-- Results List -->
+                    <ListView Grid.Row="2" ItemsSource="{Binding FoundAddresses}"
+                              SelectedItem="{Binding SelectedAddress}"
+                              Background="Transparent" BorderThickness="0"
+                              Foreground="#e2e8f0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Address" Width="120" DisplayMemberBinding="{Binding AddressHex}"/>
+                                <GridViewColumn Header="Value" Width="100" DisplayMemberBinding="{Binding ValueDisplay}"/>
+                                <GridViewColumn Header="Type" Width="80" DisplayMemberBinding="{Binding Type}"/>
+                                <GridViewColumn Header="Frozen" Width="60">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding IsFrozen}" Foreground="{Binding IsFrozen, Converter={x:Null}}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <!-- Value Editor -->
+                    <Border Grid.Row="3" Background="#1a1a2e" CornerRadius="6" Padding="12" Margin="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ModernTextBox}" Margin="0,0,8,0"
+                                     ToolTip="Enter new value"/>
+                            <Button Grid.Column="1" Content="Set" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding SetValueCommand}" Margin="0,0,8,0"/>
+                            <Button Grid.Column="2" Content="Freeze" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding FreezeValueCommand}" Margin="0,0,8,0"/>
+                            <Button Grid.Column="3" Content="Remove" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding RemoveAddressCommand}" Margin="0,0,8,0"/>
+                            <Button Grid.Column="4" Content="Clear All" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding ClearAllCommand}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Instructions Panel -->
+            <Border Grid.Column="1" Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="How to Use" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                    <Border Background="#1a1a2e" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="1. Start Crab Champions" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <TextBlock Text="2. Click 'Attach' button" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <TextBlock Text="3. Use Quick Actions or search manually" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <TextBlock Text="4. For health: note your HP, search, take damage, filter" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <TextBlock Text="5. Set value or freeze to keep it constant" Style="{StaticResource SubText}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Tips" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBlock Style="{StaticResource SubText}" TextWrapping="Wrap" Margin="0,0,0,12">
+                        • Health is usually a float (decimal)
+                        • Crystals are usually int32 (whole number)
+                        • Filter multiple times to narrow down
+                        • Freeze keeps writing the value
+                    </TextBlock>
+
+                    <TextBlock Text="Perks" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBlock Style="{StaticResource SubText}" TextWrapping="Wrap">
+                        Perks in Crab Champions are in-run upgrades. To give yourself specific perks, you'd need to find the perk array address in memory - this requires more reverse engineering of the game.
+
+                        For now, focus on modifying values like health, crystals, and damage multipliers.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="#252538" CornerRadius="6" Padding="12,8" Margin="0,16,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Ellipse Grid.Column="0" Width="10" Height="10" Margin="0,0,10,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#64748b"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAttached}" Value="True">
+                                    <Setter Property="Fill" Value="#22c55e"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+
+                <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" Style="{StaticResource BodyText}"/>
+                <TextBlock Grid.Column="2" Text="For testing only - Single player" Style="{StaticResource SubText}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
