@@ -58,6 +58,30 @@ namespace CrabChampionsSaveEditor.Models
         private const uint MEM_COMMIT = 0x1000;
         private const uint PAGE_READWRITE = 0x04;
         private const uint PAGE_EXECUTE_READWRITE = 0x40;
+        private const uint PAGE_EXECUTE_READ = 0x20;
+        private const uint PAGE_READONLY = 0x02;
+        private const uint MEM_RESERVE = 0x2000;
+        private const uint MEM_RELEASE = 0x8000;
+
+        // Additional Win32 imports for remote thread execution
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize,
+            IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out uint lpThreadId);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool GetExitCodeThread(IntPtr hThread, out uint lpExitCode);
+
+        private const uint INFINITE = 0xFFFFFFFF;
+        private const uint WAIT_OBJECT_0 = 0x00000000;
 
         #endregion
 
@@ -1035,6 +1059,457 @@ namespace CrabChampionsSaveEditor.Models
             }
 
             return sb.ToString();
+        }
+
+        #endregion
+
+        #region WeaponDA Scanning and Injection
+
+        /// <summary>
+        /// Cached WeaponDA information found in memory
+        /// </summary>
+        public class WeaponDAInfo
+        {
+            public string WeaponId { get; set; } = "";
+            public string AssetPath { get; set; } = "";
+            public IntPtr StringAddress { get; set; }
+            public IntPtr DAPointer { get; set; }
+            public DateTime FoundAt { get; set; } = DateTime.Now;
+        }
+
+        // Cache of found WeaponDA addresses
+        private readonly Dictionary<string, WeaponDAInfo> _weaponDACache = new();
+
+        // Captured player controller address (set via breakpoint or scan)
+        public IntPtr CapturedPlayerController { get; set; }
+
+        /// <summary>
+        /// All known weapon IDs for scanning
+        /// </summary>
+        public static readonly string[] KnownWeaponIds =
+        {
+            "AutoRifle", "DualShotguns", "DualPistols", "AutoShotgun", "BurstPistol",
+            "Sniper", "Crossbow", "OrbLauncher", "RocketLauncher", "Minigun",
+            "BladeLauncher", "ClusterLauncher", "Flamethrower", "ArcaneWand",
+            "LaserCannons", "Seagle", "MarksmanRifle", "IceStaff", "LightningScepter", "PoisonCannon"
+        };
+
+        /// <summary>
+        /// Scan memory for all WeaponDA asset paths
+        /// Returns a dictionary of weapon ID -> WeaponDAInfo
+        /// </summary>
+        public Dictionary<string, WeaponDAInfo> ScanForWeaponDAs()
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return new Dictionary<string, WeaponDAInfo>();
+            }
+
+            StatusChanged?.Invoke(this, "Scanning for WeaponDA asset paths...");
+            _weaponDACache.Clear();
+
+            foreach (var weaponId in KnownWeaponIds)
+            {
+                string assetPath = $"/Game/Blueprint/Weapon/{weaponId}/DA_Weapon_{weaponId}";
+                var addresses = ScanForString(assetPath);
+
+                if (addresses.Count > 0)
+                {
+                    var info = new WeaponDAInfo
+                    {
+                        WeaponId = weaponId,
+                        AssetPath = assetPath,
+                        StringAddress = addresses[0],
+                        DAPointer = IntPtr.Zero // Will be resolved by FindDAPointerFromString
+                    };
+
+                    // Try to find the actual DA pointer by backtracking from string reference
+                    info.DAPointer = FindDAPointerFromString(addresses[0], assetPath);
+
+                    _weaponDACache[weaponId] = info;
+                    StatusChanged?.Invoke(this, $"Found {weaponId}: String@{addresses[0]:X}, DA@{info.DAPointer:X}");
+                }
+            }
+
+            StatusChanged?.Invoke(this, $"Scan complete. Found {_weaponDACache.Count} weapons.");
+            return new Dictionary<string, WeaponDAInfo>(_weaponDACache);
+        }
+
+        /// <summary>
+        /// Scan for a specific weapon's DA in memory
+        /// </summary>
+        public WeaponDAInfo? ScanForWeaponDA(string weaponId)
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return null;
+            }
+
+            string assetPath = $"/Game/Blueprint/Weapon/{weaponId}/DA_Weapon_{weaponId}";
+            StatusChanged?.Invoke(this, $"Scanning for {weaponId}...");
+
+            var addresses = ScanForString(assetPath);
+            if (addresses.Count == 0)
+            {
+                StatusChanged?.Invoke(this, $"{weaponId} not found in memory. May not be loaded.");
+                return null;
+            }
+
+            var info = new WeaponDAInfo
+            {
+                WeaponId = weaponId,
+                AssetPath = assetPath,
+                StringAddress = addresses[0],
+                DAPointer = FindDAPointerFromString(addresses[0], assetPath)
+            };
+
+            _weaponDACache[weaponId] = info;
+            StatusChanged?.Invoke(this, $"Found {weaponId}: String@{addresses[0]:X}, DA@{info.DAPointer:X}");
+
+            return info;
+        }
+
+        /// <summary>
+        /// Try to find the UDataAsset pointer from an asset path string address.
+        /// In UE4, the FName/path string is typically part of the UObject structure.
+        /// The DA pointer is usually found by scanning for references to the string address.
+        /// </summary>
+        private IntPtr FindDAPointerFromString(IntPtr stringAddress, string assetPath)
+        {
+            // Strategy 1: Look for pointers referencing near this string address
+            // UE4 UObjects have their name/path at a known offset from the object base
+            // Typical UObject layout: VTable(8) + Flags(4) + Index(4) + Outer(8) + Name(8) + ...
+
+            // Try common UObject name offsets (typically 0x18 or 0x28 from object base)
+            long[] possibleOffsets = { 0x18, 0x28, 0x30, 0x20, 0x38, 0x40 };
+
+            foreach (var offset in possibleOffsets)
+            {
+                IntPtr possibleBase = IntPtr.Subtract(stringAddress, (int)offset);
+
+                // Verify this looks like a valid UObject (has a vtable pointer in valid range)
+                var vtableBytes = ReadMemory(possibleBase, 8);
+                if (vtableBytes != null)
+                {
+                    long vtable = BitConverter.ToInt64(vtableBytes, 0);
+                    // VTable should be in the executable's address range
+                    if (vtable > 0x140000000 && vtable < 0x150000000)
+                    {
+                        StatusChanged?.Invoke(this, $"  Potential DA base at offset -{offset:X}: {possibleBase:X}");
+                        return possibleBase;
+                    }
+                }
+            }
+
+            // Strategy 2: Scan for pointers TO this string address
+            // This finds code/data that references the string
+            var stringAddrBytes = BitConverter.GetBytes(stringAddress.ToInt64());
+            string pattern = BitConverter.ToString(stringAddrBytes).Replace("-", " ");
+
+            StatusChanged?.Invoke(this, $"  Searching for references to string at {stringAddress:X}...");
+
+            // For now, return the string address as a fallback
+            // The actual DA pointer requires more sophisticated analysis
+            return stringAddress;
+        }
+
+        /// <summary>
+        /// Get cached WeaponDA info, or scan if not cached
+        /// </summary>
+        public WeaponDAInfo? GetWeaponDA(string weaponId)
+        {
+            if (_weaponDACache.TryGetValue(weaponId, out var cached))
+            {
+                return cached;
+            }
+            return ScanForWeaponDA(weaponId);
+        }
+
+        /// <summary>
+        /// Call ServerSetWeaponDA to give a weapon to the player.
+        /// REQUIRES: CapturedPlayerController to be set (from breakpoint on pickup)
+        /// </summary>
+        /// <param name="weaponId">Weapon ID (e.g., "Minigun", "RocketLauncher")</param>
+        /// <returns>True if call was attempted, false on error</returns>
+        public bool GiveWeapon(string weaponId)
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return false;
+            }
+
+            if (CapturedPlayerController == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, "PlayerController not set. Set breakpoint on ServerSetWeaponDA and capture RCX.");
+                return false;
+            }
+
+            var weaponDA = GetWeaponDA(weaponId);
+            if (weaponDA == null || weaponDA.DAPointer == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, $"Could not find WeaponDA for {weaponId}. Try picking up a weapon first to load assets.");
+                return false;
+            }
+
+            StatusChanged?.Invoke(this, $"Calling ServerSetWeaponDA({CapturedPlayerController:X}, {weaponDA.DAPointer:X})...");
+
+            return CallServerSetWeaponDA(CapturedPlayerController, weaponDA.DAPointer);
+        }
+
+        /// <summary>
+        /// Call ServerSetWeaponDA with explicit addresses
+        /// </summary>
+        public bool CallServerSetWeaponDA(IntPtr playerController, IntPtr weaponDAPointer)
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return false;
+            }
+
+            // ServerSetWeaponDA address (x64 fastcall: RCX=this, RDX=weaponDA)
+            IntPtr funcAddress = new IntPtr(KnownFunctions.ServerSetWeaponDA);
+
+            StatusChanged?.Invoke(this, $"Preparing remote call to {funcAddress:X}...");
+            StatusChanged?.Invoke(this, $"  RCX (PlayerController): {playerController:X}");
+            StatusChanged?.Invoke(this, $"  RDX (WeaponDA): {weaponDAPointer:X}");
+
+            // Build shellcode for x64 fastcall
+            // mov rcx, playerController
+            // mov rdx, weaponDAPointer
+            // mov rax, funcAddress
+            // call rax
+            // ret
+            byte[] shellcode = BuildCallShellcode(playerController, weaponDAPointer, funcAddress);
+
+            return ExecuteRemoteShellcode(shellcode);
+        }
+
+        /// <summary>
+        /// Build x64 shellcode to call a function with two parameters (fastcall)
+        /// </summary>
+        private byte[] BuildCallShellcode(IntPtr param1, IntPtr param2, IntPtr funcAddress)
+        {
+            using var ms = new System.IO.MemoryStream();
+            using var bw = new System.IO.BinaryWriter(ms);
+
+            // sub rsp, 0x28 (shadow space + alignment)
+            bw.Write(new byte[] { 0x48, 0x83, 0xEC, 0x28 });
+
+            // mov rcx, param1 (48 B9 xx xx xx xx xx xx xx xx)
+            bw.Write((byte)0x48);
+            bw.Write((byte)0xB9);
+            bw.Write(param1.ToInt64());
+
+            // mov rdx, param2 (48 BA xx xx xx xx xx xx xx xx)
+            bw.Write((byte)0x48);
+            bw.Write((byte)0xBA);
+            bw.Write(param2.ToInt64());
+
+            // mov rax, funcAddress (48 B8 xx xx xx xx xx xx xx xx)
+            bw.Write((byte)0x48);
+            bw.Write((byte)0xB8);
+            bw.Write(funcAddress.ToInt64());
+
+            // call rax (FF D0)
+            bw.Write(new byte[] { 0xFF, 0xD0 });
+
+            // add rsp, 0x28
+            bw.Write(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
+
+            // ret (C3)
+            bw.Write((byte)0xC3);
+
+            return ms.ToArray();
+        }
+
+        /// <summary>
+        /// Execute shellcode in the target process via CreateRemoteThread
+        /// </summary>
+        private bool ExecuteRemoteShellcode(byte[] shellcode)
+        {
+            // Allocate executable memory in target process
+            IntPtr remoteMem = VirtualAllocEx(ProcessHandle, IntPtr.Zero, (uint)shellcode.Length,
+                MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+            if (remoteMem == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, $"VirtualAllocEx failed: {Marshal.GetLastWin32Error()}");
+                return false;
+            }
+
+            StatusChanged?.Invoke(this, $"Allocated shellcode at {remoteMem:X}");
+
+            try
+            {
+                // Write shellcode to allocated memory
+                if (!WriteProcessMemory(ProcessHandle, remoteMem, shellcode, shellcode.Length, out _))
+                {
+                    ErrorOccurred?.Invoke(this, $"WriteProcessMemory failed: {Marshal.GetLastWin32Error()}");
+                    return false;
+                }
+
+                StatusChanged?.Invoke(this, "Shellcode written, creating remote thread...");
+
+                // Create remote thread to execute shellcode
+                IntPtr hThread = CreateRemoteThread(ProcessHandle, IntPtr.Zero, 0, remoteMem, IntPtr.Zero, 0, out uint threadId);
+
+                if (hThread == IntPtr.Zero)
+                {
+                    ErrorOccurred?.Invoke(this, $"CreateRemoteThread failed: {Marshal.GetLastWin32Error()}");
+                    return false;
+                }
+
+                StatusChanged?.Invoke(this, $"Thread {threadId} created, waiting for completion...");
+
+                // Wait for thread to complete (with timeout)
+                uint waitResult = WaitForSingleObject(hThread, 5000);
+
+                if (waitResult == WAIT_OBJECT_0)
+                {
+                    GetExitCodeThread(hThread, out uint exitCode);
+                    StatusChanged?.Invoke(this, $"Remote call completed with exit code: {exitCode}");
+                    CloseHandle(hThread);
+                    return true;
+                }
+                else
+                {
+                    ErrorOccurred?.Invoke(this, $"WaitForSingleObject failed or timed out: {waitResult}");
+                    CloseHandle(hThread);
+                    return false;
+                }
+            }
+            finally
+            {
+                // Free allocated memory
+                VirtualFreeEx(ProcessHandle, remoteMem, 0, MEM_RELEASE);
+            }
+        }
+
+        /// <summary>
+        /// Similar methods for abilities and melee weapons
+        /// </summary>
+        public bool GiveAbility(string abilityId)
+        {
+            if (!IsAttached || CapturedPlayerController == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached or PlayerController not captured");
+                return false;
+            }
+
+            string assetPath = $"/Game/Blueprint/Ability/DA_Ability_{abilityId}";
+            var addresses = ScanForString(assetPath);
+
+            if (addresses.Count == 0)
+            {
+                ErrorOccurred?.Invoke(this, $"Ability {abilityId} not found in memory");
+                return false;
+            }
+
+            IntPtr daPointer = FindDAPointerFromString(addresses[0], assetPath);
+            IntPtr funcAddress = new IntPtr(KnownFunctions.ServerSetAbilityDA);
+
+            StatusChanged?.Invoke(this, $"Calling ServerSetAbilityDA for {abilityId}...");
+
+            byte[] shellcode = BuildCallShellcode(CapturedPlayerController, daPointer, funcAddress);
+            return ExecuteRemoteShellcode(shellcode);
+        }
+
+        public bool GiveMelee(string meleeId)
+        {
+            if (!IsAttached || CapturedPlayerController == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached or PlayerController not captured");
+                return false;
+            }
+
+            string assetPath = $"/Game/Blueprint/Melee/DA_Melee_{meleeId}";
+            var addresses = ScanForString(assetPath);
+
+            if (addresses.Count == 0)
+            {
+                ErrorOccurred?.Invoke(this, $"Melee {meleeId} not found in memory");
+                return false;
+            }
+
+            IntPtr daPointer = FindDAPointerFromString(addresses[0], assetPath);
+            IntPtr funcAddress = new IntPtr(KnownFunctions.ServerSetMeleeDA);
+
+            StatusChanged?.Invoke(this, $"Calling ServerSetMeleeDA for {meleeId}...");
+
+            byte[] shellcode = BuildCallShellcode(CapturedPlayerController, daPointer, funcAddress);
+            return ExecuteRemoteShellcode(shellcode);
+        }
+
+        /// <summary>
+        /// Generate a debug report of all found WeaponDAs for use with Cheat Engine
+        /// </summary>
+        public string GenerateWeaponDAReport()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== WEAPON DA SCAN REPORT ===\n");
+
+            if (!IsAttached)
+            {
+                sb.AppendLine("Not attached to game. Attach first.");
+                return sb.ToString();
+            }
+
+            sb.AppendLine($"Game Base: {BaseAddress:X}");
+            sb.AppendLine($"Captured PlayerController: {CapturedPlayerController:X}");
+            sb.AppendLine($"ServerSetWeaponDA: {KnownFunctions.ServerSetWeaponDA:X}");
+            sb.AppendLine();
+
+            var weapons = ScanForWeaponDAs();
+            sb.AppendLine($"Found {weapons.Count} weapons:\n");
+
+            foreach (var kvp in weapons.OrderBy(k => k.Key))
+            {
+                var w = kvp.Value;
+                sb.AppendLine($"[{w.WeaponId}]");
+                sb.AppendLine($"  Asset: {w.AssetPath}");
+                sb.AppendLine($"  String Address: {w.StringAddress:X}");
+                sb.AppendLine($"  DA Pointer: {w.DAPointer:X}");
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("\n=== CHEAT ENGINE USAGE ===");
+            sb.AppendLine("1. Set breakpoint on 140D809C0 (ServerSetWeaponDA)");
+            sb.AppendLine("2. Pick up any weapon to hit breakpoint");
+            sb.AppendLine("3. Note RCX value (PlayerController)");
+            sb.AppendLine("4. Use addresses above as RDX to give different weapons");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Set the captured player controller address (from debugging)
+        /// </summary>
+        public void SetPlayerController(long address)
+        {
+            CapturedPlayerController = new IntPtr(address);
+            StatusChanged?.Invoke(this, $"PlayerController set to {CapturedPlayerController:X}");
+        }
+
+        /// <summary>
+        /// Set the captured player controller address from hex string
+        /// </summary>
+        public void SetPlayerController(string hexAddress)
+        {
+            if (hexAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                hexAddress = hexAddress[2..];
+
+            if (long.TryParse(hexAddress, System.Globalization.NumberStyles.HexNumber, null, out long addr))
+            {
+                SetPlayerController(addr);
+            }
+            else
+            {
+                ErrorOccurred?.Invoke(this, $"Invalid hex address: {hexAddress}");
+            }
         }
 
         #endregion
