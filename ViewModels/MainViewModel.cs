@@ -85,13 +85,25 @@ namespace UnrealSavEditor.ViewModels
 
         // Unlock summary
         [ObservableProperty]
-        private string _weaponsStatus = "0/18";
+        private string _weaponsStatus = "0/20";
 
         [ObservableProperty]
-        private string _abilitiesStatus = "0/5";
+        private string _abilitiesStatus = "0/7";
 
         [ObservableProperty]
-        private string _meleeStatus = "0/3";
+        private string _meleeStatus = "0/5";
+
+        [ObservableProperty]
+        private string _skinsStatus = "0/42";
+
+        [ObservableProperty]
+        private string _emotesStatus = "0/10";
+
+        [ObservableProperty]
+        private string _bannersStatus = "0/10";
+
+        [ObservableProperty]
+        private string _titlesStatus = "0/15";
 
         // Quick edit values for Crab Champions
         [ObservableProperty]
@@ -617,16 +629,137 @@ namespace UnrealSavEditor.ViewModels
                 int mastery = _crabSave.MaxAllMastery();
                 _crabSave.MaxCurrency();
 
+                // Also unlock all cosmetics
+                var (skins, emotes, banners, titles) = _crabSave.UnlockAllCosmetics();
+                int challenges = _crabSave.CompleteAllChallenges();
+
                 HasUnsavedChanges = true;
                 UpdateUnlockStatus();
                 UpdateQuickEditValues();
                 RefreshTree();
 
-                StatusMessage = $"GOD MODE ACTIVATED! Unlocked {weapons + abilities + melee} items, {difficulties} difficulties, {prismatic} set to Prismatic, {mastery} mastery maxed!";
+                int totalItems = weapons + abilities + melee;
+                int totalCosmetics = skins + emotes + banners + titles;
+                StatusMessage = $"GOD MODE ACTIVATED! {totalItems} items, {difficulties} difficulties, {prismatic} prismatic, {totalCosmetics} cosmetics, {challenges} challenges!";
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error activating god mode: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllSkins()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var (charSkins, weapSkins) = _crabSave.UnlockAllSkins();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                int total = charSkins + weapSkins;
+                StatusMessage = total > 0 ? $"Unlocked {total} skins! ({charSkins} character, {weapSkins} weapon)" : "All skins already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking skins: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllEmotes()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllEmotes();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} emotes!" : "All emotes already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking emotes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllBanners()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllBanners();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} banners!" : "All banners already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking banners: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllTitles()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.UnlockAllTitles();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Unlocked {count} titles!" : "All titles already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking titles: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void UnlockAllCosmetics()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                var (skins, emotes, banners, titles) = _crabSave.UnlockAllCosmetics();
+                HasUnsavedChanges = true;
+                UpdateUnlockStatus();
+                RefreshTree();
+                int total = skins + emotes + banners + titles;
+                StatusMessage = total > 0 ? $"Unlocked {total} cosmetics! ({skins} skins, {emotes} emotes, {banners} banners, {titles} titles)" : "All cosmetics already unlocked!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error unlocking cosmetics: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void CompleteAllChallenges()
+        {
+            if (_crabSave == null) return;
+
+            try
+            {
+                int count = _crabSave.CompleteAllChallenges();
+                HasUnsavedChanges = true;
+                RefreshTree();
+                StatusMessage = count > 0 ? $"Completed {count} challenges/achievements!" : "All challenges already completed!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error completing challenges: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -638,6 +771,10 @@ namespace UnrealSavEditor.ViewModels
             WeaponsStatus = summary.WeaponsStatus;
             AbilitiesStatus = summary.AbilitiesStatus;
             MeleeStatus = summary.MeleeStatus;
+            SkinsStatus = summary.SkinsStatus;
+            EmotesStatus = summary.EmotesStatus;
+            BannersStatus = summary.BannersStatus;
+            TitlesStatus = summary.TitlesStatus;
         }
 
         // ============================================
