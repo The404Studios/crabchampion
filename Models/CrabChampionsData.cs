@@ -93,6 +93,162 @@ namespace UnrealSavEditor.Models
         };
 
         // ============================================
+        // CHARACTER SKINS (from actual save file)
+        // Path format: /Game/Character/Crab/Texture/SkinPrototype/MI_{Id}.MI_{Id}
+        // ============================================
+        public static readonly SkinInfo[] CharacterSkins =
+        {
+            // Default and basic skins
+            new("Default", "Default", "Default", true, "/Game/Character/Crab/Texture/Default/MI_Crab_Default.MI_Crab_Default"),
+            new("BlueIce", "Blue Ice", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_BlueIce.MI_BlueIce"),
+            new("Glimmer", "Glimmer", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Glimmer.MI_Glimmer"),
+            new("Flow", "Flow", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Flow.MI_Flow"),
+            new("Aqua", "Aqua", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Aqua.MI_Aqua"),
+            new("Iridescent", "Iridescent", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Iridescent.MI_Iridescent"),
+            new("Warped", "Warped", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Warped.MI_Warped"),
+            new("Amber", "Amber", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Amber.MI_Amber"),
+            new("Watermelon", "Watermelon", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Watermelon.MI_Watermelon"),
+            new("Chemical", "Chemical", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Chemical.MI_Chemical"),
+            new("Tiger", "Tiger", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Tiger.MI_Tiger"),
+            new("Snow", "Snow", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Snow.MI_Snow"),
+            new("Cheetah", "Cheetah", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Cheetah.MI_Cheetah"),
+            new("Geometric", "Geometric", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Geometric.MI_Geometric"),
+            new("Orange", "Orange", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Orange.MI_Orange"),
+            new("Pink", "Pink", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Pink.MI_Pink"),
+            new("Waves", "Waves", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Waves.MI_Waves"),
+            new("Swirl", "Swirl", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Swirl.MI_Swirl"),
+            new("Jelly", "Jelly", "Common", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Jelly.MI_Jelly"),
+            new("Obsidian", "Obsidian", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Obsidian.MI_Obsidian"),
+            new("HotRod", "Hot Rod", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_HotRod.MI_HotRod"),
+            new("Toxic", "Toxic", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Toxic.MI_Toxic"),
+            new("Grid", "Grid", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Grid.MI_Grid"),
+            new("PurpleTiger", "Purple Tiger", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_PurpleTiger.MI_PurpleTiger"),
+            new("BlueTiger", "Blue Tiger", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_BlueTiger.MI_BlueTiger"),
+            new("RedTiger", "Red Tiger", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_RedTiger.MI_RedTiger"),
+            new("JetBlack", "Jet Black", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_JetBlack.MI_JetBlack"),
+            new("Ocean", "Ocean", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Ocean.MI_Ocean"),
+            new("Focus", "Focus", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Focus.MI_Focus"),
+            new("Vibrations", "Vibrations", "Rare", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Vibrations.MI_Vibrations"),
+            new("Chrome", "Chrome", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Chrome.MI_Chrome"),
+            new("Vampire", "Vampire", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Vampire.MI_Vampire"),
+            new("Reptile", "Reptile", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Reptile.MI_Reptile"),
+            new("Damascus", "Damascus", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Damascus.MI_Damascus"),
+            new("Current", "Current", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Current.MI_Current"),
+            new("Regal", "Regal", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Regal.MI_Regal"),
+            new("Heat", "Heat", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Heat.MI_Heat"),
+            new("Festive", "Festive", "Epic", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Festive.MI_Festive"),
+
+            // Rank skins
+            new("Silver", "Silver", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Silver.MI_Silver"),
+            new("FakeGold", "Fake Gold", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_FakeGold.MI_FakeGold"),
+            new("Gold", "Gold", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Gold.MI_Gold"),
+            new("Sapphire", "Sapphire", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Sapphire.MI_Sapphire"),
+            new("Emerald", "Emerald", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Emerald.MI_Emerald"),
+            new("Ruby", "Ruby", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Ruby.MI_Ruby"),
+            new("Kaleidoscopic", "Kaleidoscopic", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Kaleidoscopic.MI_Kaleidoscopic"),
+            new("Prismatic", "Prismatic", "Legendary", false, "/Game/Character/Crab/Texture/SkinPrototype/MI_Prismatic.MI_Prismatic"),
+        };
+
+        // ============================================
+        // WEAPON SKINS
+        // Path format: /Game/Blueprint/Cosmetics/WeaponSkins/DA_WeaponSkin_{WeaponId}_{SkinId}.DA_WeaponSkin_{WeaponId}_{SkinId}
+        // ============================================
+        public static readonly SkinInfo[] WeaponSkins =
+        {
+            // Universal weapon skins (apply to all weapons)
+            new("Default", "Default", "Default", true),
+            new("Gold", "Golden", "Rare", false),
+            new("Silver", "Silver", "Uncommon", false),
+            new("Obsidian", "Obsidian", "Rare", false),
+            new("Crystal", "Crystal", "Rare", false),
+            new("Neon", "Neon", "Epic", false),
+            new("Prismatic", "Prismatic", "Legendary", false),
+            new("Flame", "Flame", "Epic", false),
+            new("Ice", "Ice", "Epic", false),
+            new("Void", "Void", "Legendary", false),
+            new("Champion", "Champion", "Legendary", false),
+        };
+
+        // ============================================
+        // EMOTES
+        // Path format: /Game/Blueprint/Cosmetics/Emotes/DA_Emote_{Id}.DA_Emote_{Id}
+        // ============================================
+        public static readonly CosmeticInfo[] Emotes =
+        {
+            new("Wave", "Wave", "Default"),
+            new("Dance", "Dance", "Rare"),
+            new("Flex", "Flex", "Uncommon"),
+            new("Clap", "Clap", "Common"),
+            new("Bow", "Bow", "Uncommon"),
+            new("Victory", "Victory Pose", "Rare"),
+            new("Taunt", "Taunt", "Rare"),
+            new("Crabwalk", "Crab Walk", "Epic"),
+            new("Moonwalk", "Moonwalk", "Epic"),
+            new("Spin", "Spin", "Legendary"),
+        };
+
+        // ============================================
+        // BANNERS / PROFILE COSMETICS
+        // Path format: /Game/Blueprint/Cosmetics/Banners/DA_Banner_{Id}.DA_Banner_{Id}
+        // ============================================
+        public static readonly CosmeticInfo[] Banners =
+        {
+            new("Default", "Default Banner", "Default"),
+            new("Bronze", "Bronze Banner", "Common"),
+            new("Silver", "Silver Banner", "Uncommon"),
+            new("Gold", "Gold Banner", "Rare"),
+            new("Diamond", "Diamond Banner", "Epic"),
+            new("Prismatic", "Prismatic Banner", "Legendary"),
+            new("Champion", "Champion Banner", "Legendary"),
+            new("Slayer", "Slayer Banner", "Rare"),
+            new("Speedrunner", "Speedrunner Banner", "Rare"),
+            new("Collector", "Collector Banner", "Epic"),
+        };
+
+        // ============================================
+        // TITLES
+        // ============================================
+        public static readonly string[] Titles =
+        {
+            "Crab Champion",
+            "Shell Shocker",
+            "Wave Rider",
+            "Island Hopper",
+            "Boss Slayer",
+            "Prismatic Master",
+            "Speed Demon",
+            "Collector",
+            "Completionist",
+            "Legend",
+            "Champion",
+            "Immortal",
+            "Untouchable",
+            "Destroyer",
+            "Survivor",
+        };
+
+        // ============================================
+        // CHALLENGES / ACHIEVEMENTS
+        // ============================================
+        public static readonly ChallengeInfo[] Challenges =
+        {
+            new("FirstWin", "First Victory", "Win your first run", 1),
+            new("TenWins", "Veteran", "Win 10 runs", 10),
+            new("HundredWins", "Champion", "Win 100 runs", 100),
+            new("NoDamage", "Untouchable", "Complete a run without taking damage", 1),
+            new("SpeedRun", "Speed Demon", "Complete a run in under 30 minutes", 1),
+            new("AllWeapons", "Arsenal", "Unlock all weapons", 32),
+            new("AllSkins", "Fashionista", "Unlock all character skins", 30),
+            new("MaxMastery", "Master", "Max out weapon mastery", 100),
+            new("AllDifficulties", "Conqueror", "Beat all difficulty tiers", 8),
+            new("BossRush", "Boss Hunter", "Defeat 100 bosses", 100),
+            new("Millionaire", "Rich Crab", "Collect 1,000,000 crystals total", 1000000),
+            new("Perfectionist", "Perfectionist", "Get 100% accuracy in a run", 100),
+            new("Marathon", "Marathon Runner", "Travel 1,000,000 distance", 1000000),
+            new("AllPrismatic", "Prismatic Collector", "Get all items to Prismatic rarity", 32),
+        };
+
+        // ============================================
         // PERKS / UPGRADES (In-game powerups)
         // ============================================
         public static readonly PerkInfo[] Perks =
@@ -204,14 +360,19 @@ namespace UnrealSavEditor.Models
         // ============================================
         public static readonly PresetProfile[] Presets =
         {
-            new("GodMode", "God Mode", "Unlock everything, max stats, prismatic rarity",
-                unlockAll: true, prismatic: true, maxCurrency: true, maxMastery: true),
-            new("AllUnlocks", "All Unlocks", "Unlock all weapons and difficulties only",
-                unlockAll: true, prismatic: false, maxCurrency: false, maxMastery: false),
+            new("GodMode", "God Mode", "Unlock everything, max stats, prismatic rarity, all skins",
+                unlockAll: true, prismatic: true, maxCurrency: true, maxMastery: true,
+                unlockSkins: true, unlockCosmetics: true),
+            new("AllUnlocks", "All Unlocks", "Unlock all weapons, skins and difficulties",
+                unlockAll: true, prismatic: false, maxCurrency: false, maxMastery: false,
+                unlockSkins: true),
             new("Prismatic", "Prismatic Collection", "Set all items to prismatic rarity",
                 unlockAll: false, prismatic: true, maxCurrency: false, maxMastery: false),
             new("RichCrab", "Rich Crab", "Max out currency only",
                 unlockAll: false, prismatic: false, maxCurrency: true, maxMastery: false),
+            new("Fashionista", "Fashionista", "Unlock all skins and cosmetics only",
+                unlockAll: false, prismatic: false, maxCurrency: false, maxMastery: false,
+                unlockSkins: true, unlockCosmetics: true),
             new("FreshStart", "Fresh Start", "Reset to default (starter weapons only)",
                 unlockAll: false, prismatic: false, maxCurrency: false, maxMastery: false, isReset: true),
         };
@@ -455,10 +616,13 @@ namespace UnrealSavEditor.Models
         public bool MaxCurrency { get; }
         public bool MaxMastery { get; }
         public bool IsReset { get; }
+        public bool UnlockSkins { get; }
+        public bool UnlockCosmetics { get; }
 
         public PresetProfile(string id, string displayName, string description,
             bool unlockAll = false, bool prismatic = false, bool maxCurrency = false,
-            bool maxMastery = false, bool isReset = false)
+            bool maxMastery = false, bool isReset = false, bool unlockSkins = false,
+            bool unlockCosmetics = false)
         {
             Id = id;
             DisplayName = displayName;
@@ -468,6 +632,78 @@ namespace UnrealSavEditor.Models
             MaxCurrency = maxCurrency;
             MaxMastery = maxMastery;
             IsReset = isReset;
+            UnlockSkins = unlockSkins;
+            UnlockCosmetics = unlockCosmetics;
+        }
+    }
+
+    /// <summary>
+    /// Represents a character or weapon skin
+    /// </summary>
+    public class SkinInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Rarity { get; }
+        public bool IsDefault { get; }
+        public string AssetPath { get; }
+
+        public SkinInfo(string id, string displayName, string rarity, bool isDefault)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Rarity = rarity;
+            IsDefault = isDefault;
+            AssetPath = $"/Game/Blueprint/Cosmetics/Skins/DA_Skin_{id}.DA_Skin_{id}";
+        }
+
+        public SkinInfo(string id, string displayName, string rarity, bool isDefault, string customPath)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Rarity = rarity;
+            IsDefault = isDefault;
+            AssetPath = customPath;
+        }
+    }
+
+    /// <summary>
+    /// Represents an emote, banner, or other cosmetic item
+    /// </summary>
+    public class CosmeticInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Rarity { get; }
+        public string AssetPath { get; }
+
+        public CosmeticInfo(string id, string displayName, string rarity)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Rarity = rarity;
+            AssetPath = $"/Game/Blueprint/Cosmetics/{id}/DA_{id}.DA_{id}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a challenge/achievement
+    /// </summary>
+    public class ChallengeInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Description { get; }
+        public int RequiredValue { get; }
+        public string AssetPath { get; }
+
+        public ChallengeInfo(string id, string displayName, string description, int requiredValue)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Description = description;
+            RequiredValue = requiredValue;
+            AssetPath = $"/Game/Blueprint/Challenges/DA_Challenge_{id}.DA_Challenge_{id}";
         }
     }
 }

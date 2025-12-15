@@ -303,8 +303,8 @@
                                 </Button>
                             </Border>
 
-                            <!-- Unlock Status Display -->
-                            <Grid Margin="0,0,0,16">
+                            <!-- Unlock Status Display - Row 1 (Combat) -->
+                            <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
@@ -335,6 +335,52 @@
                                         <TextBlock Text="Melee" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
                                         <TextBlock Text="{Binding MeleeStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
                                                    HorizontalAlignment="Center" Foreground="#22D3EE"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Unlock Status Display - Row 2 (Cosmetics) -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="#0F172A" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="👔" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Skins" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SkinsStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#EC4899"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="#0F172A" CornerRadius="8" Padding="12" Margin="4,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🎭" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Emotes" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding EmotesStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#EC4899"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="#0F172A" CornerRadius="8" Padding="12" Margin="4,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🚩" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Banners" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding BannersStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#EC4899"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="3" Background="#0F172A" CornerRadius="8" Padding="12" Margin="8,0,0,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🏷️" FontSize="20" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Titles" Style="{StaticResource LabelText}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding TitlesStatus}" Style="{StaticResource BodyText}" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" Foreground="#EC4899"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -423,11 +469,92 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Cosmetics Card -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="👔" FontSize="20" Margin="0,0,12,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="Cosmetics" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="Unlock skins, emotes, banners and titles" Style="{StaticResource LabelText}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Unlock All Cosmetics Button -->
+                            <Border CornerRadius="12" Margin="0,0,0,16">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#EC4899" Offset="0"/>
+                                        <GradientStop Color="#8B5CF6" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Button Command="{Binding UnlockAllCosmeticsCommand}" Cursor="Hand"
+                                        Background="Transparent" BorderThickness="0" Padding="16,12">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <TextBlock Text="✨" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Unlock All Cosmetics" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                                                        <TextBlock Text="Skins + Emotes + Banners + Titles" FontSize="11" Foreground="#FFFFFF99"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Border>
+
+                            <WrapPanel>
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllSkinsCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="👔" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Skins"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllEmotesCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎭" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Emotes"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllBannersCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🚩" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Banners"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding UnlockAllTitlesCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🏷️" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Unlock All Titles"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding CompleteAllChallengesCommand}"
+                                        Margin="0,0,8,8" Padding="14,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🏆" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Complete All Challenges"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Preset Profiles Card -->
                     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <TextBlock Text="🎭" FontSize="20" Margin="0,0,12,0"/>
+                                <TextBlock Text="⚡" FontSize="20" Margin="0,0,12,0"/>
                                 <StackPanel>
                                     <TextBlock Text="Preset Profiles" Style="{StaticResource BodyText}" FontWeight="Bold" FontSize="16"/>
                                     <TextBlock Text="Quick apply preset configurations" Style="{StaticResource LabelText}"/>
@@ -456,6 +583,14 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="💰" Margin="0,0,8,0"/>
                                         <TextBlock Text="Rich Crab"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Padding="14,10"
+                                        Command="{Binding ApplyPresetCommand}" CommandParameter="Fashionista">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="👔" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Fashionista"/>
                                     </StackPanel>
                                 </Button>
 
@@ -726,7 +861,7 @@
                     </TextBlock>
                 </StackPanel>
 
-                <TextBlock Grid.Column="1" Text="Crab Champions Save Editor v1.0" Foreground="#F97316"/>
+                <TextBlock Grid.Column="1" Text="Crab Champions Save Editor v1.1" Foreground="#F97316"/>
             </Grid>
         </Border>
 

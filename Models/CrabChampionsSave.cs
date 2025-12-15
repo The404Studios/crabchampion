@@ -609,11 +609,8 @@ namespace UnrealSavEditor.Models
         }
 
         // ============================================
-        // ARRAY HELPER METHODS (READ-ONLY)
+        // ARRAY HELPER METHODS
         // ============================================
-        // NOTE: We intentionally do NOT have an AddToArray method.
-        // Adding items to arrays without fully understanding the save format
-        // can corrupt saves and cause items to be relocked.
 
         /// <summary>
         /// Check if an array contains a specific string value (for reading only)
@@ -643,6 +640,60 @@ namespace UnrealSavEditor.Models
             return false;
         }
 
+        /// <summary>
+        /// Find or create an ArrayProperty for object references
+        /// </summary>
+        private ArrayProperty? FindOrCreateObjectArray(string propertyName)
+        {
+            // Try to find existing property
+            var prop = FindProperty(propertyName, propertyName.ToLowerInvariant());
+
+            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+                return ap;
+
+            // If not found, create a new one
+            if (prop == null)
+            {
+                var newArray = new ArrayProperty
+                {
+                    Name = propertyName,
+                    TypeName = "ArrayProperty",
+                    InnerType = "ObjectProperty",
+                    Items = new List<object>()
+                };
+                _gvasFile.Properties.Add(newArray);
+                return newArray;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Find or create a StrProperty array
+        /// </summary>
+        private ArrayProperty? FindOrCreateStringArray(string propertyName)
+        {
+            var prop = FindProperty(propertyName, propertyName.ToLowerInvariant());
+
+            if (prop is ArrayProperty ap && (ap.InnerType == "StrProperty" || ap.InnerType == "NameProperty"))
+                return ap;
+
+            if (prop == null)
+            {
+                var newArray = new ArrayProperty
+                {
+                    Name = propertyName,
+                    TypeName = "ArrayProperty",
+                    InnerType = "StrProperty",
+                    Items = new List<object>()
+                };
+                _gvasFile.Properties.Add(newArray);
+                return newArray;
+            }
+
+            return null;
+        }
+
         // ============================================
         // UNLOCK & MODIFICATION METHODS
         // ============================================
@@ -669,9 +720,29 @@ namespace UnrealSavEditor.Models
         public int UnlockAllWeapons()
         {
             int unlocked = 0;
-            var prop = FindProperty("UnlockedWeapons", "unlockedweapons");
 
-            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            // Try multiple possible property names
+            string[] possibleNames = { "UnlockedWeapons", "unlockedweapons", "UnlockedPrimaryWeapons",
+                                       "OwnedWeapons", "Weapons", "PrimaryWeapons" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            // If not found, create the array
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedWeapons");
+            }
+
+            if (ap != null)
             {
                 foreach (var weapon in CrabChampionsData.PrimaryWeapons)
                 {
@@ -691,9 +762,29 @@ namespace UnrealSavEditor.Models
         public int UnlockAllAbilities()
         {
             int unlocked = 0;
-            var prop = FindProperty("UnlockedAbilities", "unlockedabilities");
 
-            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            // Try multiple possible property names
+            string[] possibleNames = { "UnlockedAbilities", "unlockedabilities", "UnlockedSecondaryWeapons",
+                                       "OwnedAbilities", "Abilities", "SecondaryWeapons" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            // If not found, create the array
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedAbilities");
+            }
+
+            if (ap != null)
             {
                 foreach (var ability in CrabChampionsData.SecondaryWeapons)
                 {
@@ -713,9 +804,29 @@ namespace UnrealSavEditor.Models
         public int UnlockAllMelee()
         {
             int unlocked = 0;
-            var prop = FindProperty("UnlockedMeleeWeapons", "unlockedmeleeweapons");
 
-            if (prop is ArrayProperty ap && ap.InnerType == "ObjectProperty")
+            // Try multiple possible property names
+            string[] possibleNames = { "UnlockedMeleeWeapons", "unlockedmeleeweapons", "UnlockedMelee",
+                                       "OwnedMelee", "MeleeWeapons", "Melee" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            // If not found, create the array
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedMeleeWeapons");
+            }
+
+            if (ap != null)
             {
                 foreach (var melee in CrabChampionsData.MeleeWeapons)
                 {
@@ -730,11 +841,311 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
+        /// Find a property by exact name match
+        /// </summary>
+        private GvasProperty? FindPropertyExact(string name)
+        {
+            return _gvasFile.Properties.FirstOrDefault(p =>
+                p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
         /// Unlock all items (weapons, abilities, melee)
         /// </summary>
         public (int weapons, int abilities, int melee) UnlockAll()
         {
             return (UnlockAllWeapons(), UnlockAllAbilities(), UnlockAllMelee());
+        }
+
+        /// <summary>
+        /// Unlock all character skins
+        /// </summary>
+        public int UnlockAllCharacterSkins()
+        {
+            int unlocked = 0;
+
+            // Try multiple possible property names
+            string[] possibleNames = { "UnlockedSkins", "unlockedskins", "CharacterSkins", "characterskins",
+                                       "OwnedSkins", "Skins", "PlayerSkins", "CosmeticSkins" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            // If not found, create the array
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedSkins");
+            }
+
+            if (ap != null)
+            {
+                foreach (var skin in CrabChampionsData.CharacterSkins)
+                {
+                    if (!ArrayContainsPath(ap, skin.AssetPath))
+                    {
+                        ap.Items.Add(skin.AssetPath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all weapon skins
+        /// </summary>
+        public int UnlockAllWeaponSkins()
+        {
+            int unlocked = 0;
+
+            // Try multiple possible property names
+            string[] possibleNames = { "UnlockedWeaponSkins", "unlockedweaponskins", "WeaponSkins",
+                                       "weaponskins", "OwnedWeaponSkins", "WeaponCosmetics" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            // If not found, create the array
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedWeaponSkins");
+            }
+
+            if (ap != null)
+            {
+                foreach (var skin in CrabChampionsData.WeaponSkins)
+                {
+                    // For weapon skins, we add the skin for each weapon type
+                    foreach (var weapon in CrabChampionsData.PrimaryWeapons)
+                    {
+                        var skinPath = $"/Game/Blueprint/Cosmetics/WeaponSkins/DA_WeaponSkin_{weapon.Id}_{skin.Id}.DA_WeaponSkin_{weapon.Id}_{skin.Id}";
+                        if (!ArrayContainsPath(ap, skinPath) && !ArrayContainsPath(ap, skin.AssetPath))
+                        {
+                            ap.Items.Add(skinPath);
+                            unlocked++;
+                        }
+                    }
+                }
+            }
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all emotes
+        /// </summary>
+        public int UnlockAllEmotes()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedEmotes", "unlockedemotes", "Emotes", "emotes",
+                                       "OwnedEmotes", "PlayerEmotes" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedEmotes");
+            }
+
+            if (ap != null)
+            {
+                foreach (var emote in CrabChampionsData.Emotes)
+                {
+                    var emotePath = $"/Game/Blueprint/Cosmetics/Emotes/DA_Emote_{emote.Id}.DA_Emote_{emote.Id}";
+                    if (!ArrayContainsPath(ap, emotePath))
+                    {
+                        ap.Items.Add(emotePath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all banners
+        /// </summary>
+        public int UnlockAllBanners()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedBanners", "unlockedbanners", "Banners", "banners",
+                                       "OwnedBanners", "PlayerBanners", "ProfileBanners" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedBanners");
+            }
+
+            if (ap != null)
+            {
+                foreach (var banner in CrabChampionsData.Banners)
+                {
+                    var bannerPath = $"/Game/Blueprint/Cosmetics/Banners/DA_Banner_{banner.Id}.DA_Banner_{banner.Id}";
+                    if (!ArrayContainsPath(ap, bannerPath))
+                    {
+                        ap.Items.Add(bannerPath);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Unlock all titles
+        /// </summary>
+        public int UnlockAllTitles()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedTitles", "unlockedtitles", "Titles", "titles",
+                                       "OwnedTitles", "PlayerTitles" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && (arr.InnerType == "StrProperty" || arr.InnerType == "NameProperty"))
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateStringArray("UnlockedTitles");
+            }
+
+            if (ap != null)
+            {
+                foreach (var title in CrabChampionsData.Titles)
+                {
+                    if (!ArrayContainsValue(ap, title))
+                    {
+                        ap.Items.Add(title);
+                        unlocked++;
+                    }
+                }
+            }
+            return unlocked;
+        }
+
+        /// <summary>
+        /// Complete all challenges/achievements
+        /// </summary>
+        public int CompleteAllChallenges()
+        {
+            int completed = 0;
+
+            // Try to find challenge completion tracking
+            string[] possibleNames = { "CompletedChallenges", "completedchallenges", "Challenges",
+                                       "Achievements", "achievements", "UnlockedAchievements" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr)
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateStringArray("CompletedChallenges");
+            }
+
+            if (ap != null)
+            {
+                foreach (var challenge in CrabChampionsData.Challenges)
+                {
+                    if (!ArrayContainsValue(ap, challenge.Id) && !ArrayContainsPath(ap, challenge.AssetPath))
+                    {
+                        ap.Items.Add(challenge.Id);
+                        completed++;
+                    }
+                }
+            }
+
+            // Also try to set boolean challenge flags
+            foreach (var challenge in CrabChampionsData.Challenges)
+            {
+                var boolProp = FindProperty($"{challenge.Id}Completed", $"{challenge.Id}_Complete",
+                    $"Has{challenge.Id}", $"b{challenge.Id}");
+                if (boolProp is BoolProperty bp && !bp.Value)
+                {
+                    bp.Value = true;
+                    completed++;
+                }
+
+                // Also set progress to max
+                var progressProp = FindProperty($"{challenge.Id}Progress", $"{challenge.Id}_Progress",
+                    $"{challenge.Id}Count");
+                if (progressProp is IntProperty ip && ip.Value < challenge.RequiredValue)
+                {
+                    ip.Value = challenge.RequiredValue;
+                    completed++;
+                }
+            }
+
+            return completed;
+        }
+
+        /// <summary>
+        /// Unlock all skins (character + weapon)
+        /// </summary>
+        public (int characterSkins, int weaponSkins) UnlockAllSkins()
+        {
+            return (UnlockAllCharacterSkins(), UnlockAllWeaponSkins());
+        }
+
+        /// <summary>
+        /// Unlock all cosmetics (skins, emotes, banners, titles)
+        /// </summary>
+        public (int skins, int emotes, int banners, int titles) UnlockAllCosmetics()
+        {
+            var (charSkins, weapSkins) = UnlockAllSkins();
+            return (charSkins + weapSkins, UnlockAllEmotes(), UnlockAllBanners(), UnlockAllTitles());
         }
 
         /// <summary>
@@ -957,7 +1368,69 @@ namespace UnrealSavEditor.Models
             // Also get ranked items count for additional info
             summary.RankedItems = GetRankedItemsCount();
 
+            // Cosmetics counts
+            summary.TotalSkins = CrabChampionsData.CharacterSkins.Length + CrabChampionsData.WeaponSkins.Length;
+            summary.TotalEmotes = CrabChampionsData.Emotes.Length;
+            summary.TotalBanners = CrabChampionsData.Banners.Length;
+            summary.TotalTitles = CrabChampionsData.Titles.Length;
+
+            // Get unlocked cosmetics counts
+            summary.UnlockedSkins = GetUnlockedSkinsCount();
+            summary.UnlockedEmotes = GetUnlockedEmotesCount();
+            summary.UnlockedBanners = GetUnlockedBannersCount();
+            summary.UnlockedTitles = GetUnlockedTitlesCount();
+
             return summary;
+        }
+
+        /// <summary>
+        /// Get count of unlocked skins
+        /// </summary>
+        public int GetUnlockedSkinsCount()
+        {
+            int count = 0;
+            var charSkinsProp = FindPropertyExact("UnlockedSkins");
+            if (charSkinsProp is ArrayProperty ap1)
+                count += ap1.Items.Count;
+
+            var weapSkinsProp = FindPropertyExact("UnlockedWeaponSkins");
+            if (weapSkinsProp is ArrayProperty ap2)
+                count += ap2.Items.Count;
+
+            return count;
+        }
+
+        /// <summary>
+        /// Get count of unlocked emotes
+        /// </summary>
+        public int GetUnlockedEmotesCount()
+        {
+            var prop = FindPropertyExact("UnlockedEmotes");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Get count of unlocked banners
+        /// </summary>
+        public int GetUnlockedBannersCount()
+        {
+            var prop = FindPropertyExact("UnlockedBanners");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        /// <summary>
+        /// Get count of unlocked titles
+        /// </summary>
+        public int GetUnlockedTitlesCount()
+        {
+            var prop = FindPropertyExact("UnlockedTitles");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
         }
 
         // ============================================
@@ -999,6 +1472,19 @@ namespace UnrealSavEditor.Models
             {
                 MaxCurrency();
                 result.CurrencyMaxed = true;
+            }
+
+            if (preset.UnlockSkins)
+            {
+                var (charSkins, weapSkins) = UnlockAllSkins();
+                result.SkinsUnlocked = charSkins + weapSkins;
+            }
+
+            if (preset.UnlockCosmetics)
+            {
+                result.EmotesUnlocked = UnlockAllEmotes();
+                result.BannersUnlocked = UnlockAllBanners();
+                result.TitlesUnlocked = UnlockAllTitles();
             }
 
             return result;
@@ -1177,11 +1663,27 @@ namespace UnrealSavEditor.Models
         public int TotalDifficulties { get; set; }
         public int RankedItems { get; set; }
 
+        // Cosmetics
+        public int UnlockedSkins { get; set; }
+        public int TotalSkins { get; set; }
+        public int UnlockedEmotes { get; set; }
+        public int TotalEmotes { get; set; }
+        public int UnlockedBanners { get; set; }
+        public int TotalBanners { get; set; }
+        public int UnlockedTitles { get; set; }
+        public int TotalTitles { get; set; }
+
         public string WeaponsStatus => $"{UnlockedWeapons}/{TotalWeapons}";
         public string AbilitiesStatus => $"{UnlockedAbilities}/{TotalAbilities}";
         public string MeleeStatus => $"{UnlockedMelee}/{TotalMelee}";
+        public string SkinsStatus => $"{UnlockedSkins}/{TotalSkins}";
+        public string EmotesStatus => $"{UnlockedEmotes}/{TotalEmotes}";
+        public string BannersStatus => $"{UnlockedBanners}/{TotalBanners}";
+        public string TitlesStatus => $"{UnlockedTitles}/{TotalTitles}";
         public int TotalUnlocked => UnlockedWeapons + UnlockedAbilities + UnlockedMelee;
         public int TotalItems => TotalWeapons + TotalAbilities + TotalMelee;
+        public int TotalCosmetics => TotalSkins + TotalEmotes + TotalBanners + TotalTitles;
+        public int UnlockedCosmetics => UnlockedSkins + UnlockedEmotes + UnlockedBanners + UnlockedTitles;
     }
 
     /// <summary>
@@ -1198,10 +1700,16 @@ namespace UnrealSavEditor.Models
         public int ItemsSetPrismatic { get; set; }
         public int MasteryMaxed { get; set; }
         public bool CurrencyMaxed { get; set; }
+        public int SkinsUnlocked { get; set; }
+        public int EmotesUnlocked { get; set; }
+        public int BannersUnlocked { get; set; }
+        public int TitlesUnlocked { get; set; }
+        public int ChallengesCompleted { get; set; }
 
         public int TotalChanges => WeaponsUnlocked + AbilitiesUnlocked + MeleeUnlocked +
                                    DifficultiesUnlocked + ItemsSetPrismatic + MasteryMaxed +
-                                   (CurrencyMaxed ? 1 : 0);
+                                   (CurrencyMaxed ? 1 : 0) + SkinsUnlocked + EmotesUnlocked +
+                                   BannersUnlocked + TitlesUnlocked + ChallengesCompleted;
     }
 
     /// <summary>
