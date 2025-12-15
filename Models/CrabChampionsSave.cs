@@ -715,6 +715,18 @@ namespace UnrealSavEditor.Models
         }
 
         /// <summary>
+        /// Check if array inner type is a simple type that can store strings.
+        /// StructProperty arrays have complex structures that would break if we add strings.
+        /// </summary>
+        private bool IsSimpleArrayType(string innerType)
+        {
+            return innerType == "ObjectProperty" ||
+                   innerType == "StrProperty" ||
+                   innerType == "NameProperty" ||
+                   innerType == "SoftObjectProperty";
+        }
+
+        /// <summary>
         /// Unlock all primary weapons
         /// </summary>
         public int UnlockAllWeapons()
@@ -729,7 +741,8 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                // Only use arrays with simple inner types (not StructProperty)
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -742,7 +755,8 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedWeapons");
             }
 
-            if (ap != null)
+            // Only add to arrays with simple types
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var weapon in CrabChampionsData.PrimaryWeapons)
                 {
@@ -771,7 +785,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -784,7 +798,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedAbilities");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var ability in CrabChampionsData.SecondaryWeapons)
                 {
@@ -813,7 +827,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -826,7 +840,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedMeleeWeapons");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var melee in CrabChampionsData.MeleeWeapons)
                 {
@@ -872,7 +886,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -885,7 +899,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedSkins");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var skin in CrabChampionsData.CharacterSkins)
                 {
@@ -914,7 +928,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -927,7 +941,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedWeaponSkins");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var skin in CrabChampionsData.WeaponSkins)
                 {
@@ -960,7 +974,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -972,7 +986,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedEmotes");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var emote in CrabChampionsData.Emotes)
                 {
@@ -1001,7 +1015,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && (arr.InnerType == "ObjectProperty" || arr.InnerType == "StrProperty"))
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -1013,7 +1027,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateObjectArray("UnlockedBanners");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var banner in CrabChampionsData.Banners)
                 {
@@ -1042,7 +1056,7 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr && (arr.InnerType == "StrProperty" || arr.InnerType == "NameProperty"))
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -1054,7 +1068,7 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateStringArray("UnlockedTitles");
             }
 
-            if (ap != null)
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var title in CrabChampionsData.Titles)
                 {
@@ -1083,7 +1097,8 @@ namespace UnrealSavEditor.Models
             foreach (var name in possibleNames)
             {
                 var prop = FindPropertyExact(name);
-                if (prop is ArrayProperty arr)
+                // Only use arrays with simple inner types
+                if (prop is ArrayProperty arr && IsSimpleArrayType(arr.InnerType))
                 {
                     ap = arr;
                     break;
@@ -1095,7 +1110,8 @@ namespace UnrealSavEditor.Models
                 ap = FindOrCreateStringArray("CompletedChallenges");
             }
 
-            if (ap != null)
+            // Only add to simple arrays
+            if (ap != null && IsSimpleArrayType(ap.InnerType))
             {
                 foreach (var challenge in CrabChampionsData.Challenges)
                 {
