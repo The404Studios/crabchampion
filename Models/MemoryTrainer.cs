@@ -246,6 +246,49 @@ namespace CrabChampionsSaveEditor.Models
             public const long WeaponModHandler = 0x140D8A470;    // sub_140D8A470
             public const long InventoryHandler = 0x140D85150;    // sub_140D85150 (shared)
             public const long CooldownHandler = 0x140D789C0;     // sub_140D789C0
+
+            // =============================================
+            // SERVER RPC FUNCTIONS (Client→Server)
+            // These are the key functions for item injection!
+            // =============================================
+
+            // Set Data Asset functions (for giving items)
+            public const long ServerSetWeaponDA = 0x140D809C0;      // Set weapon data asset
+            public const long ServerSetAbilityDA = 0x140D80960;     // Set ability data asset
+            public const long ServerSetMeleeDA = 0x140D80990;       // Set melee data asset
+
+            // Equip functions
+            public const long ServerEquipInventory = 0x140D807E0;   // Equip from inventory
+            public const long ServerEquipCosmetics = 0x140D807B0;   // Equip cosmetics
+
+            // Remove item functions
+            public const long ServerRemoveWeaponMod = 0x140D80930;
+            public const long ServerRemoveAbilityMod = 0x140D80870;
+            public const long ServerRemoveMeleeMod = 0x140D808A0;
+            public const long ServerRemovePerk = 0x140D808D0;
+            public const long ServerRemoveRelic = 0x140D80900;
+
+            // Account/progression functions
+            public const long ServerRefreshAccount = 0x140D80840;
+            public const long ServerIncrementNumInventorySlots = 0x140D80810;
+
+            // =============================================
+            // ONREP CALLBACKS (Replication notifications)
+            // Called when replicated properties change
+            // =============================================
+            public const long OnRep_Inventory = 0x140D80690;
+            public const long OnRep_Crystals = 0x140D80600;
+            public const long OnRep_Keys = 0x140D806F0;
+            public const long OnRep_WeaponDA = 0x140D80780;
+            public const long OnRep_AbilityDA = 0x140D80540;
+            public const long OnRep_MeleeDA = 0x140D80720;
+            public const long OnRep_Combo = 0x140D805D0;
+            public const long OnRep_Eliminations = 0x140D80660;
+            public const long OnRep_AccountLevel = 0x140D80570;
+            public const long OnRep_AccountRank = 0x140D805A0;
+            public const long OnRep_DamageTakenOnThisIsland = 0x140D80630;
+            public const long OnRep_IslandRewardRarity = 0x140D806C0;
+            public const long OnRep_ScaleMultiplier = 0x140D80750;
         }
 
         #endregion
