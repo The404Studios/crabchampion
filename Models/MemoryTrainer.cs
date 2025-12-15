@@ -337,6 +337,203 @@ namespace CrabChampionsSaveEditor.Models
         }
 
         /// <summary>
+        /// ECrabWeaponModType enum - all weapon mod types (from .rdata:0x143296D70)
+        /// 95 total weapon mods with ordinal values 0-94
+        /// </summary>
+        public static class ECrabWeaponModType
+        {
+            public const string None = "ECrabWeaponModType::None";                       // 0
+            public const string DoubleShot = "ECrabWeaponModType::DoubleShot";           // 1
+            public const string BouncingShot = "ECrabWeaponModType::BouncingShot";       // 2
+            public const string AcceleratingShot = "ECrabWeaponModType::AcceleratingShot"; // 3
+            public const string ZigZagShot = "ECrabWeaponModType::ZigZagShot";           // 4
+            public const string SpiralShot = "ECrabWeaponModType::SpiralShot";           // 5
+            public const string SnakeShot = "ECrabWeaponModType::SnakeShot";             // 6
+            public const string ChaoticShot = "ECrabWeaponModType::ChaoticShot";         // 7
+            public const string BoomerangShot = "ECrabWeaponModType::BoomerangShot";     // 8
+            public const string OrbitingShot = "ECrabWeaponModType::OrbitingShot";       // 9
+            public const string RecoilShot = "ECrabWeaponModType::RecoilShot";           // 10
+            public const string FastShot = "ECrabWeaponModType::FastShot";               // 11
+            public const string KnockbackShot = "ECrabWeaponModType::KnockbackShot";     // 12
+            public const string BigMag = "ECrabWeaponModType::BigMag";                   // 13
+            public const string HighCaliber = "ECrabWeaponModType::HighCaliber";         // 14
+            public const string WindUp = "ECrabWeaponModType::WindUp";                   // 15
+            public const string SteadyShot = "ECrabWeaponModType::SteadyShot";           // 16
+            public const string TrickShot = "ECrabWeaponModType::TrickShot";             // 17
+            public const string AerialShot = "ECrabWeaponModType::AerialShot";           // 18
+            public const string GripTape = "ECrabWeaponModType::GripTape";               // 19
+            public const string BlindFire = "ECrabWeaponModType::BlindFire";             // 20
+            public const string TimeShot = "ECrabWeaponModType::TimeShot";               // 21
+            public const string TimeBolt = "ECrabWeaponModType::TimeBolt";               // 22
+            public const string UltraShot = "ECrabWeaponModType::UltraShot";             // 23
+            public const string SharpShot = "ECrabWeaponModType::SharpShot";             // 24
+            public const string GlueShot = "ECrabWeaponModType::GlueShot";               // 25
+            public const string BigShot = "ECrabWeaponModType::BigShot";                 // 26
+            public const string StreakShot = "ECrabWeaponModType::StreakShot";           // 27
+            public const string MagShot = "ECrabWeaponModType::MagShot";                 // 28
+            public const string Uppercut = "ECrabWeaponModType::Uppercut";               // 29
+            public const string HeavyShot = "ECrabWeaponModType::HeavyShot";             // 30
+            public const string HeavyHitter = "ECrabWeaponModType::HeavyHitter";         // 31
+            public const string RapidFire = "ECrabWeaponModType::RapidFire";             // 32
+            public const string EscalatingShot = "ECrabWeaponModType::EscalatingShot";   // 33
+            public const string IceShot = "ECrabWeaponModType::IceShot";                 // 34
+            public const string FireShot = "ECrabWeaponModType::FireShot";               // 35
+            public const string LightningShot = "ECrabWeaponModType::LightningShot";     // 36
+            public const string PoisonShot = "ECrabWeaponModType::PoisonShot";           // 37
+            public const string ArcaneShot = "ECrabWeaponModType::ArcaneShot";           // 38
+            public const string RandomShot = "ECrabWeaponModType::RandomShot";           // 39
+            public const string EfficientShot = "ECrabWeaponModType::EfficientShot";     // 40
+            public const string ReloadArc = "ECrabWeaponModType::ReloadArc";             // 41
+            public const string SonicBoom = "ECrabWeaponModType::SonicBoom";             // 42
+            public const string LuckyShot = "ECrabWeaponModType::LuckyShot";             // 43
+            public const string TripleShot = "ECrabWeaponModType::TripleShot";           // 44
+            public const string ArcShot = "ECrabWeaponModType::ArcShot";                 // 45
+            public const string XShot = "ECrabWeaponModType::XShot";                     // 46
+            public const string ScatterShot = "ECrabWeaponModType::ScatterShot";         // 47
+            public const string TargetingShot = "ECrabWeaponModType::TargetingShot";     // 48
+            public const string LinkShot = "ECrabWeaponModType::LinkShot";               // 49
+            public const string DrillShot = "ECrabWeaponModType::DrillShot";             // 50
+            public const string DoubleTap = "ECrabWeaponModType::DoubleTap";             // 51
+            public const string HealthShot = "ECrabWeaponModType::HealthShot";           // 52
+            public const string MoneyShot = "ECrabWeaponModType::MoneyShot";             // 53
+            public const string DamageShot = "ECrabWeaponModType::DamageShot";           // 54
+            public const string Supercharged = "ECrabWeaponModType::Supercharged";       // 55
+            public const string Juiced = "ECrabWeaponModType::Juiced";                   // 56
+            public const string AuraShot = "ECrabWeaponModType::AuraShot";               // 57
+            public const string PiercingShot = "ECrabWeaponModType::PiercingShot";       // 58
+            public const string BubbleShot = "ECrabWeaponModType::BubbleShot";           // 59
+            public const string PopcornShot = "ECrabWeaponModType::PopcornShot";         // 60
+            public const string PumpkinShot = "ECrabWeaponModType::PumpkinShot";         // 61
+            public const string DaggerArc = "ECrabWeaponModType::DaggerArc";             // 62
+            public const string PiercingWave = "ECrabWeaponModType::PiercingWave";       // 63
+            public const string ArcaneBlast = "ECrabWeaponModType::ArcaneBlast";         // 64
+            public const string ShotgunBlast = "ECrabWeaponModType::ShotgunBlast";       // 65
+            public const string MaceShot = "ECrabWeaponModType::MaceShot";               // 66
+            public const string FireworkShot = "ECrabWeaponModType::FireworkShot";       // 67
+            public const string ThornShot = "ECrabWeaponModType::ThornShot";             // 68
+            public const string Firepower = "ECrabWeaponModType::Firepower";             // 69
+            public const string SquareShot = "ECrabWeaponModType::SquareShot";           // 70
+            public const string SplitShot = "ECrabWeaponModType::SplitShot";             // 71
+            public const string HomingShot = "ECrabWeaponModType::HomingShot";           // 72
+            public const string SplashDamage = "ECrabWeaponModType::SplashDamage";       // 73
+            public const string SparkShot = "ECrabWeaponModType::SparkShot";             // 74
+            public const string ProximityBarrage = "ECrabWeaponModType::ProximityBarrage"; // 75
+            public const string HomingBlades = "ECrabWeaponModType::HomingBlades";       // 76
+            public const string BombShot = "ECrabWeaponModType::BombShot";               // 77
+            public const string LandmineShot = "ECrabWeaponModType::LandmineShot";       // 78
+            public const string TorpedoShot = "ECrabWeaponModType::TorpedoShot";         // 79
+            public const string FireballShot = "ECrabWeaponModType::FireballShot";       // 80
+            public const string SharpenedAxe = "ECrabWeaponModType::SharpenedAxe";       // 81
+            public const string TriangleShot = "ECrabWeaponModType::TriangleShot";       // 82
+            public const string BeamShot = "ECrabWeaponModType::BeamShot";               // 83
+            public const string SporeShot = "ECrabWeaponModType::SporeShot";             // 84
+            public const string IceStorm = "ECrabWeaponModType::IceStorm";               // 85
+            public const string FireStorm = "ECrabWeaponModType::FireStorm";             // 86
+            public const string LightningStorm = "ECrabWeaponModType::LightningStorm";   // 87
+            public const string PoisonStorm = "ECrabWeaponModType::PoisonStorm";         // 88
+            public const string IceStrike = "ECrabWeaponModType::IceStrike";             // 89
+            public const string FireStrike = "ECrabWeaponModType::FireStrike";           // 90
+            public const string LightningStrike = "ECrabWeaponModType::LightningStrike"; // 91
+            public const string PoisonStrike = "ECrabWeaponModType::PoisonStrike";       // 92
+            public const string SpikeStrike = "ECrabWeaponModType::SpikeStrike";         // 93
+            public const string DiceShot = "ECrabWeaponModType::DiceShot";               // 94
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, DoubleShot, BouncingShot, AcceleratingShot, ZigZagShot, SpiralShot, SnakeShot,
+                ChaoticShot, BoomerangShot, OrbitingShot, RecoilShot, FastShot, KnockbackShot, BigMag,
+                HighCaliber, WindUp, SteadyShot, TrickShot, AerialShot, GripTape, BlindFire, TimeShot,
+                TimeBolt, UltraShot, SharpShot, GlueShot, BigShot, StreakShot, MagShot, Uppercut,
+                HeavyShot, HeavyHitter, RapidFire, EscalatingShot, IceShot, FireShot, LightningShot,
+                PoisonShot, ArcaneShot, RandomShot, EfficientShot, ReloadArc, SonicBoom, LuckyShot,
+                TripleShot, ArcShot, XShot, ScatterShot, TargetingShot, LinkShot, DrillShot, DoubleTap,
+                HealthShot, MoneyShot, DamageShot, Supercharged, Juiced, AuraShot, PiercingShot,
+                BubbleShot, PopcornShot, PumpkinShot, DaggerArc, PiercingWave, ArcaneBlast, ShotgunBlast,
+                MaceShot, FireworkShot, ThornShot, Firepower, SquareShot, SplitShot, HomingShot,
+                SplashDamage, SparkShot, ProximityBarrage, HomingBlades, BombShot, LandmineShot,
+                TorpedoShot, FireballShot, SharpenedAxe, TriangleShot, BeamShot, SporeShot, IceStorm,
+                FireStorm, LightningStorm, PoisonStorm, IceStrike, FireStrike, LightningStrike,
+                PoisonStrike, SpikeStrike, DiceShot
+            };
+        }
+
+        /// <summary>
+        /// ECrabMiscPickupType enum - special/misc pickup types (from .rdata:0x143298020)
+        /// </summary>
+        public static class ECrabMiscPickupType
+        {
+            public const string None = "ECrabMiscPickupType::None";                                   // 0
+            public const string StreamerLootUpgradePickup = "ECrabMiscPickupType::StreamerLootUpgradePickup"; // 1
+            public const string AutoLootPickup = "ECrabMiscPickupType::AutoLootPickup";               // 2
+            public const string InfinitePedestalPickup = "ECrabMiscPickupType::InfinitePedestalPickup"; // 3
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, StreamerLootUpgradePickup, AutoLootPickup, InfinitePedestalPickup
+            };
+        }
+
+        /// <summary>
+        /// ECrabCurrencyType enum - currency/resource types (from .rdata:0x143298120)
+        /// </summary>
+        public static class ECrabCurrencyType
+        {
+            public const string Crystal = "ECrabCurrencyType::Crystal";     // 0
+            public const string Key = "ECrabCurrencyType::Key";             // 1
+            public const string Health = "ECrabCurrencyType::Health";       // 2
+            public const string MaxHealth = "ECrabCurrencyType::MaxHealth"; // 3
+
+            public static readonly string[] AllValues = new[]
+            {
+                Crystal, Key, Health, MaxHealth
+            };
+        }
+
+        /// <summary>
+        /// ECrabEnhancementType enum - enhancement effects from anvil (from .rdata:0x1432981F0)
+        /// 28 enhancement types that can be applied to weapons/abilities
+        /// </summary>
+        public static class ECrabEnhancementType
+        {
+            public const string None = "ECrabEnhancementType::None";               // 0
+            public const string Bouncing = "ECrabEnhancementType::Bouncing";       // 1
+            public const string Accelerating = "ECrabEnhancementType::Accelerating"; // 2
+            public const string Zigging = "ECrabEnhancementType::Zigging";         // 3
+            public const string Spiraling = "ECrabEnhancementType::Spiraling";     // 4
+            public const string Snaking = "ECrabEnhancementType::Snaking";         // 5
+            public const string Returning = "ECrabEnhancementType::Returning";     // 6
+            public const string Orbiting = "ECrabEnhancementType::Orbiting";       // 7
+            public const string Chipping = "ECrabEnhancementType::Chipping";       // 8
+            public const string Sticky = "ECrabEnhancementType::Sticky";           // 9
+            public const string Growing = "ECrabEnhancementType::Growing";         // 10
+            public const string Freezing = "ECrabEnhancementType::Freezing";       // 11
+            public const string Flaming = "ECrabEnhancementType::Flaming";         // 12
+            public const string Electrifying = "ECrabEnhancementType::Electrifying"; // 13
+            public const string Toxifying = "ECrabEnhancementType::Toxifying";     // 14
+            public const string Arcanifying = "ECrabEnhancementType::Arcanifying"; // 15
+            public const string Persisting = "ECrabEnhancementType::Persisting";   // 16
+            public const string Doubling = "ECrabEnhancementType::Doubling";       // 17
+            public const string Targeting = "ECrabEnhancementType::Targeting";     // 18
+            public const string Damaging = "ECrabEnhancementType::Damaging";       // 19
+            public const string Booming = "ECrabEnhancementType::Booming";         // 20
+            public const string Tripling = "ECrabEnhancementType::Tripling";       // 21
+            public const string Splitting = "ECrabEnhancementType::Splitting";     // 22
+            public const string Scattering = "ECrabEnhancementType::Scattering";   // 23
+            public const string Expanding = "ECrabEnhancementType::Expanding";     // 24
+            public const string Homing = "ECrabEnhancementType::Homing";           // 25
+            public const string Endangering = "ECrabEnhancementType::Endangering"; // 26
+            public const string Random = "ECrabEnhancementType::Random";           // 27
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Bouncing, Accelerating, Zigging, Spiraling, Snaking, Returning, Orbiting,
+                Chipping, Sticky, Growing, Freezing, Flaming, Electrifying, Toxifying, Arcanifying,
+                Persisting, Doubling, Targeting, Damaging, Booming, Tripling, Splitting, Scattering,
+                Expanding, Homing, Endangering, Random
+            };
+        }
+
+        /// <summary>
         /// UE4 UClass names for game objects (from .rdata section)
         /// These are the internal class names used by UE4 reflection
         /// </summary>
