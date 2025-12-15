@@ -173,10 +173,50 @@ namespace CrabChampionsSaveEditor.Models
         }
 
         /// <summary>
+        /// ECrabTurretType enum values for turret types (from .rdata:0x14328DA00)
+        /// </summary>
+        public static class ECrabTurretType
+        {
+            public const string None = "ECrabTurretType::None";
+            public const string Sentry = "ECrabTurretType::Sentry";
+            public const string Sniper = "ECrabTurretType::Sniper";
+            public const string Mortar = "ECrabTurretType::Mortar";
+            public const string Wave = "ECrabTurretType::Wave";
+            public const string Beam = "ECrabTurretType::Beam";
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Sentry, Sniper, Mortar, Wave, Beam
+            };
+        }
+
+        /// <summary>
+        /// UE4 UClass names for game objects (from .rdata section)
+        /// These are the internal class names used by UE4 reflection
+        /// </summary>
+        public static class UE4ClassNames
+        {
+            // Item classes (UTF-16LE in binary)
+            public const string CrabPerk = "CrabPerk";               // 0x14328DAC8
+            public const string CrabMeleeMod = "CrabMeleeMod";       // 0x14328DAD8 (UTF-16)
+            public const string CrabAbilityMod = "CrabAbilityMod";   // 0x14328DB88 (UTF-16)
+            public const string CrabWeaponMod = "CrabWeaponMod";     // 0x14328DC38 (UTF-16)
+            public const string CrabInventoryCooldown = "CrabInventoryCooldown"; // 0x14328DCE8
+
+            // Data asset classes
+            public const string PerkDA = "PerkDA";                   // 0x14328DAC0
+            public const string MeleeModDA = "MeleeModDA";           // 0x14328DB68
+            public const string AbilityModDA = "AbilityModDA";       // 0x14328DC18
+            public const string WeaponModDA = "WeaponModDA";         // 0x14328DCC8
+            public const string InventoryDA = "InventoryDA";         // 0x14328DD18
+        }
+
+        /// <summary>
         /// UE4 property names used in save/memory (for FName lookups)
         /// </summary>
         public static class UE4PropertyNames
         {
+            // Unlock arrays (save file)
             public const string UnlockedPerks = "UnlockedPerks";
             public const string UnlockedWeapons = "UnlockedWeapons";
             public const string UnlockedAbilities = "UnlockedAbilities";
@@ -187,6 +227,25 @@ namespace CrabChampionsSaveEditor.Models
             public const string UnlockedRelics = "UnlockedRelics";
             public const string RankedWeapons = "RankedWeapons";
             public const string CrabCosmetics = "CrabCosmetics";
+
+            // Item properties (from .rdata)
+            public const string InventoryInfo = "InventoryInfo";     // 0x14328DB28 - links items to inventory
+            public const string CurrentCooldown = "CurrentCooldown"; // 0x14328DD88
+            public const string UnderlyingType = "UnderlyingType";   // 0x14328DDD8
+        }
+
+        /// <summary>
+        /// Known function addresses from RE (version-specific)
+        /// These are example addresses - actual values depend on game version
+        /// </summary>
+        public static class KnownFunctions
+        {
+            // Item-related functions (offsets from base)
+            public const long MeleeModHandler = 0x140D7A300;     // sub_140D7A300
+            public const long AbilityModHandler = 0x140D6F370;   // sub_140D6F370
+            public const long WeaponModHandler = 0x140D8A470;    // sub_140D8A470
+            public const long InventoryHandler = 0x140D85150;    // sub_140D85150 (shared)
+            public const long CooldownHandler = 0x140D789C0;     // sub_140D789C0
         }
 
         #endregion
