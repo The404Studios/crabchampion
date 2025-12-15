@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,9 +12,17 @@ namespace CrabTrainer.ViewModels
     public partial class TrainerViewModel : ObservableObject, IDisposable
     {
         private readonly TrainerService _trainer;
+        private MemoryDumper? _dumper;
+        private PerkInjector? _perkInjector;
 
         [ObservableProperty]
         private string _statusMessage = "Ready - Start Crab Champions and click Attach";
+
+        [ObservableProperty]
+        private int _scanProgress;
+
+        [ObservableProperty]
+        private bool _isScanning;
 
         [ObservableProperty]
         private bool _isAttached;
@@ -243,6 +252,139 @@ namespace CrabTrainer.ViewModels
                 _trainer.SetValue(addr, 999999);
             }
             StatusMessage = "Set all found int values to 999999";
+        }
+
+        /// <summary>
+        /// Dump memory around all known game strings (perks, weapons, etc)
+        /// </summary>
+        [RelayCommand]
+        private async Task DumpMemoryAsync()
+        {
+            if (!IsAttached)
+            {
+                StatusMessage = "Not attached to game!";
+                return;
+            }
+
+            IsScanning = true;
+            ScanProgress = 0;
+
+            try
+            {
+                _dumper = new MemoryDumper(_trainer.Memory);
+                _dumper.StatusChanged += (s, msg) =>
+                {
+                    Application.Current.Dispatcher.Invoke(() => StatusMessage = msg);
+                };
+                _dumper.ProgressChanged += (s, progress) =>
+                {
+                    Application.Current.Dispatcher.Invoke(() => ScanProgress = progress);
+                };
+
+                await Task.Run(() => _dumper.ScanAndDump());
+
+                StatusMessage = $"Dump complete! Found {_dumper.FoundStrings.Count} strings. Check Desktop for file.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Dump failed: {ex.Message}";
+            }
+            finally
+            {
+                IsScanning = false;
+            }
+        }
+
+        /// <summary>
+        /// Scan for perk structures specifically
+        /// </summary>
+        [RelayCommand]
+        private async Task ScanPerksAsync()
+        {
+            if (!IsAttached)
+            {
+                StatusMessage = "Not attached to game!";
+                return;
+            }
+
+            IsScanning = true;
+
+            try
+            {
+                _perkInjector = new PerkInjector(_trainer.Memory);
+                _perkInjector.StatusChanged += (s, msg) =>
+                {
+                    Application.Current.Dispatcher.Invoke(() => StatusMessage = msg);
+                };
+
+                int found = await Task.Run(() => _perkInjector.ScanForPerkStrings());
+
+                if (found > 0)
+                {
+                    await Task.Run(() => _perkInjector.FindPerkArrayStructure());
+                }
+
+                StatusMessage = $"Perk scan complete! Found {found} perk references.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Perk scan failed: {ex.Message}";
+            }
+            finally
+            {
+                IsScanning = false;
+            }
+        }
+
+        /// <summary>
+        /// Show found perk addresses
+        /// </summary>
+        [RelayCommand]
+        private void ShowPerkAddresses()
+        {
+            if (_perkInjector == null || _perkInjector.FoundPerkAddresses.Count == 0)
+            {
+                StatusMessage = "Run 'Scan Perks' first";
+                return;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== Found Perk Addresses ===\n");
+
+            foreach (var found in _perkInjector.FoundPerkAddresses.Take(30))
+            {
+                sb.AppendLine($"{found.PerkName}: 0x{found.Address.ToInt64():X}");
+                if (found.PotentialArrayBase != IntPtr.Zero)
+                {
+                    sb.AppendLine($"  Array at: 0x{found.PotentialArrayBase.ToInt64():X} (Count: {found.ArrayCount}, Max: {found.ArrayMax})");
+                }
+            }
+
+            if (_perkInjector.PerkArrayBase != null)
+            {
+                sb.AppendLine($"\nMost likely perk array: 0x{_perkInjector.PerkArrayBase?.ToInt64():X}");
+            }
+
+            MessageBox.Show(sb.ToString(), "Perk Addresses", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        /// <summary>
+        /// Dump memory around a selected found perk
+        /// </summary>
+        [RelayCommand]
+        private void DumpPerkMemory()
+        {
+            if (_perkInjector == null || _perkInjector.FoundPerkAddresses.Count == 0)
+            {
+                StatusMessage = "Run 'Scan Perks' first";
+                return;
+            }
+
+            // Dump first found perk
+            var first = _perkInjector.FoundPerkAddresses.First();
+            var dump = _perkInjector.DumpPerkMemory(first, 128, 128);
+
+            MessageBox.Show(dump, $"Memory around {first.PerkName}", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void RefreshAddresses()

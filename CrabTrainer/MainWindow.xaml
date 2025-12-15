@@ -13,6 +13,8 @@
     </Window.DataContext>
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
         <!-- Dark Theme Styles -->
         <Style x:Key="HeaderText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="20"/>
@@ -194,6 +196,44 @@
                         </StackPanel>
                     </Button>
                 </WrapPanel>
+
+                <!-- Memory Dump / Perk Scan Section -->
+                <TextBlock Text="Structure Analysis" Style="{StaticResource BodyText}" FontWeight="Bold" Margin="0,16,0,12"/>
+                <WrapPanel>
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding DumpMemoryCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" Margin="0,0,8,0"/>
+                            <TextBlock Text="Dump All Structures"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ScanPerksCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎯" Margin="0,0,8,0"/>
+                            <TextBlock Text="Scan Perks"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ShowPerkAddressesCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📋" Margin="0,0,8,0"/>
+                            <TextBlock Text="Show Perk Addresses"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding DumpPerkMemoryCommand}"
+                            Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔍" Margin="0,0,8,0"/>
+                            <TextBlock Text="Dump Perk Memory"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+
+                <!-- Progress Bar for scanning -->
+                <ProgressBar Height="4" Margin="0,8,0,0" Value="{Binding ScanProgress}" Maximum="100"
+                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"
+                             Background="#2a2a4a" Foreground="#ff6b6b"/>
             </StackPanel>
         </Border>
 
