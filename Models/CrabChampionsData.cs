@@ -249,43 +249,338 @@ namespace UnrealSavEditor.Models
         };
 
         // ============================================
-        // PERKS / UPGRADES (In-game powerups)
+        // WEAPON MODS (from actual game data)
+        // Path format: /Game/Blueprint/Pickup/WeaponMod/{Rarity}/DA_WeaponMod_{Id}.DA_WeaponMod_{Id}
+        // ============================================
+        public static readonly ModInfo[] WeaponMods =
+        {
+            // Common Weapon Mods
+            new("AcceleratingShot", "Accelerating Shot", "Common", "Damage increases with consecutive hits"),
+            new("ArcaneShot", "Arcane Shot", "Common", "Shots deal arcane damage"),
+            new("BigMag", "Big Mag", "Common", "Increased magazine size"),
+            new("BigShot", "Big Shot", "Common", "Larger projectiles"),
+            new("BlindFire", "Blind Fire", "Common", "Increased fire rate but reduced accuracy"),
+            new("BoomerangShot", "Boomerang Shot", "Common", "Shots return to you"),
+            new("BouncingShot", "Bouncing Shot", "Common", "Shots bounce off surfaces"),
+            new("ChaoticShot", "Chaotic Shot", "Common", "Shots move erratically"),
+            new("EfficientShot", "Efficient Shot", "Common", "Reduced ammo consumption"),
+            new("EscalatingShot", "Escalating Shot", "Common", "Damage increases over time"),
+            new("FastShot", "Fast Shot", "Common", "Faster projectile speed"),
+            new("FireShot", "Fire Shot", "Common", "Shots ignite enemies"),
+            new("GlueShot", "Glue Shot", "Common", "Shots slow enemies"),
+            new("GripTape", "Grip Tape", "Common", "Reduced recoil"),
+            new("HeavyHitter", "Heavy Hitter", "Common", "Increased damage"),
+            new("HeavyShot", "Heavy Shot", "Common", "More powerful shots"),
+            new("HighCaliber", "High Caliber", "Common", "Increased bullet damage"),
+            new("IceShot", "Ice Shot", "Common", "Shots freeze enemies"),
+            new("KnockbackShot", "Knockback Shot", "Common", "Shots push enemies back"),
+            new("LightningShot", "Lightning Shot", "Common", "Shots chain lightning"),
+            new("MagShot", "Mag Shot", "Common", "Magazine-based damage bonus"),
+            new("OrbitingShot", "Orbiting Shot", "Common", "Shots orbit around target"),
+            new("PoisonShot", "Poison Shot", "Common", "Shots poison enemies"),
+            new("RandomShot", "Random Shot", "Common", "Random elemental effects"),
+            new("RapidFire", "Rapid Fire", "Common", "Increased fire rate"),
+            new("RecoilShot", "Recoil Shot", "Common", "Shots have increased knockback"),
+            new("ReloadArc", "Reload Arc", "Common", "Arc damage on reload"),
+            new("SharpShot", "Sharp Shot", "Common", "Increased critical damage"),
+            new("SnakeShot", "Snake Shot", "Common", "Wavy projectile path"),
+            new("SonicBoom", "Sonic Boom", "Common", "Shockwave on impact"),
+            new("SpiralShot", "Spiral Shot", "Common", "Spiral projectile path"),
+            new("SteadyShot", "Steady Shot", "Common", "More accurate shots"),
+            new("StreakShot", "Streak Shot", "Common", "Bonus for kill streaks"),
+            new("TimeBolt", "Time Bolt", "Common", "Slow time on hit"),
+            new("TimeShot", "Time Shot", "Common", "Damage over time"),
+            new("TrickShot", "Trick Shot", "Common", "Ricochet damage bonus"),
+            new("UltraShot", "Ultra Shot", "Common", "Massive damage boost"),
+            new("WindUp", "Wind Up", "Common", "Charge for more damage"),
+            new("ZigZagShot", "Zig Zag Shot", "Common", "Zigzag projectile path"),
+
+            // Epic Weapon Mods
+            new("ArcShot", "Arc Shot", "Epic", "Arcing projectiles"),
+            new("ArcaneBlast", "Arcane Blast", "Epic", "Arcane explosion on hit"),
+            new("AuraShot", "Aura Shot", "Epic", "Damage aura on hit"),
+            new("DaggerArc", "Dagger Arc", "Epic", "Spawn daggers on reload"),
+            new("DamageShot", "Damage Shot", "Epic", "Pure damage increase"),
+            new("DoubleTap", "Double Tap", "Epic", "Fire two shots at once"),
+            new("DrillShot", "Drill Shot", "Epic", "Piercing drill projectiles"),
+            new("HealthShot", "Health Shot", "Epic", "Heal on hit"),
+            new("Juiced", "Juiced", "Epic", "Damage boost when full health"),
+            new("LinkShot", "Link Shot", "Epic", "Chain damage between enemies"),
+            new("MaceShot", "Mace Shot", "Epic", "Heavy impact damage"),
+            new("MoneyShot", "Money Shot", "Epic", "Bonus crystals on kill"),
+            new("PiercingShot", "Piercing Shot", "Epic", "Shots pierce enemies"),
+            new("PiercingWave", "Piercing Wave", "Epic", "Wave that pierces"),
+            new("PumpkinShot", "Pumpkin Shot", "Epic", "Explosive pumpkins"),
+            new("ScatterShot", "Scatter Shot", "Epic", "Spread shots"),
+            new("ShotgunBlast", "Shotgun Blast", "Epic", "Shotgun-style burst"),
+            new("Supercharged", "Supercharged", "Epic", "Overcharged shots"),
+            new("TargetingShot", "Targeting Shot", "Epic", "Homing projectiles"),
+
+            // Legendary Weapon Mods
+            new("BombShot", "Bomb Shot", "Legendary", "Explosive projectiles"),
+            new("DiceShot", "Dice Shot", "Legendary", "Random damage multiplier"),
+            new("FireStorm", "Fire Storm", "Legendary", "Fire storm on kill"),
+            new("FireballShot", "Fireball Shot", "Legendary", "Shoot fireballs"),
+            new("Firepower", "Firepower", "Legendary", "Massive fire damage"),
+            new("HomingBlades", "Homing Blades", "Legendary", "Spawn homing blades"),
+            new("IceStorm", "Ice Storm", "Legendary", "Ice storm on kill"),
+            new("IceStrike", "Ice Strike", "Legendary", "Freezing strike damage"),
+            new("PoisonStorm", "Poison Storm", "Legendary", "Poison storm on kill"),
+            new("ProximityBarrage", "Proximity Barrage", "Legendary", "Auto-fire when enemies near"),
+            new("SharpenedAxe", "Sharpened Axe", "Legendary", "Throw axes"),
+            new("SparkShot", "Spark Shot", "Legendary", "Electric sparks"),
+            new("SplashDamage", "Splash Damage", "Legendary", "Area damage"),
+            new("SplitShot", "Split Shot", "Legendary", "Shots split on hit"),
+            new("SporeShot", "Spore Shot", "Legendary", "Poison spores on hit"),
+        };
+
+        // ============================================
+        // ABILITY MODS (from actual game data)
+        // Path format: /Game/Blueprint/Pickup/AbilityMod/{Rarity}/DA_AbilityMod_{Id}.DA_AbilityMod_{Id}
+        // ============================================
+        public static readonly ModInfo[] AbilityMods =
+        {
+            // Common Ability Mods
+            new("BigAbility", "Big Ability", "Common", "Larger ability area"),
+            new("BiggerBoom", "Bigger Boom", "Common", "Larger explosions"),
+            new("ChaoticExplosion", "Chaotic Explosion", "Common", "Random explosion patterns"),
+            new("GlueExplosion", "Glue Explosion", "Common", "Slowing explosions"),
+            new("HeatSink", "Heat Sink", "Common", "Reduced cooldown"),
+            new("ImplodingExplosion", "Imploding Explosion", "Common", "Pull enemies in"),
+            new("IronExplosion", "Iron Explosion", "Common", "Armored explosions"),
+            new("TimeExplosion", "Time Explosion", "Common", "Slow-mo explosion"),
+
+            // Epic Ability Mods
+            new("AuraExplosion", "Aura Explosion", "Epic", "Damage aura on explosion"),
+            new("BouncingExplosion", "Bouncing Explosion", "Epic", "Bouncing explosions"),
+            new("BubbleBlast", "Bubble Blast", "Epic", "Bubble projectiles"),
+            new("DaggerBlast", "Dagger Blast", "Epic", "Spawn daggers"),
+            new("DamageExplosion", "Damage Explosion", "Epic", "High damage explosions"),
+            new("GiantDrill", "Giant Drill", "Epic", "Drilling projectile"),
+            new("Grenadier", "Grenadier", "Epic", "Extra grenades"),
+            new("LayeredExplosion", "Layered Explosion", "Epic", "Multiple explosion layers"),
+            new("SentryTurret", "Sentry Turret", "Epic", "Deploy sentry turret"),
+            new("SniperTurret", "Sniper Turret", "Epic", "Deploy sniper turret"),
+            new("SparkExplosion", "Spark Explosion", "Epic", "Electric explosions"),
+            new("ThornExplosion", "Thorn Explosion", "Epic", "Thorn damage on explosion"),
+
+            // Legendary Ability Mods
+            new("BeamTurret", "Beam Turret", "Legendary", "Deploy beam turret"),
+            new("BombExplosion", "Bomb Explosion", "Legendary", "Cluster bombs"),
+            new("CloneExplosion", "Clone Explosion", "Legendary", "Clone explosions"),
+            new("CrystalBarrage", "Crystal Barrage", "Legendary", "Crystal projectile barrage"),
+            new("FireExplosion", "Fire Explosion", "Legendary", "Fire explosions"),
+            new("IceExplosion", "Ice Explosion", "Legendary", "Freezing explosions"),
+            new("LightningExplosion", "Lightning Explosion", "Legendary", "Lightning explosions"),
+            new("MortarTurret", "Mortar Turret", "Legendary", "Deploy mortar turret"),
+            new("PoisonExplosion", "Poison Explosion", "Legendary", "Poison explosions"),
+            new("ScytheVortex", "Scythe Vortex", "Legendary", "Spinning scythe vortex"),
+            new("SpinningBlade", "Spinning Blade", "Legendary", "Orbiting blade"),
+            new("SplitAbility", "Split Ability", "Legendary", "Split into multiple"),
+            new("SporeExplosion", "Spore Explosion", "Legendary", "Poison spore cloud"),
+            new("TargetingExplosion", "Targeting Explosion", "Legendary", "Homing explosions"),
+            new("WaveTurret", "Wave Turret", "Legendary", "Deploy wave turret"),
+        };
+
+        // ============================================
+        // MELEE MODS (from actual game data)
+        // Path format: /Game/Blueprint/Pickup/MeleeMod/{Rarity}/DA_MeleeMod_{Id}.DA_MeleeMod_{Id}
+        // ============================================
+        public static readonly ModInfo[] MeleeMods =
+        {
+            // Common Melee Mods
+            new("BigClaws", "Big Claws", "Common", "Larger melee range"),
+            new("Blender", "Blender", "Common", "Faster attack speed"),
+            new("IronClaws", "Iron Claws", "Common", "Increased damage"),
+            new("SharpClaws", "Sharp Claws", "Common", "Critical damage boost"),
+            new("TimeClaws", "Time Claws", "Common", "Damage over time"),
+            new("Vampire", "Vampire", "Common", "Lifesteal on hit"),
+
+            // Epic Melee Mods
+            new("ArcaneClaws", "Arcane Claws", "Epic", "Arcane melee damage"),
+            new("FireClaws", "Fire Claws", "Epic", "Fire melee damage"),
+            new("IceClaws", "Ice Claws", "Epic", "Ice melee damage"),
+            new("LightningClaws", "Lightning Claws", "Epic", "Lightning melee damage"),
+            new("PoisonClaws", "Poison Claws", "Epic", "Poison melee damage"),
+
+            // Greed Melee Mods
+            new("Brawler", "Brawler", "Greed", "High risk high reward melee"),
+        };
+
+        // ============================================
+        // RELICS (from actual game data)
+        // Path format: /Game/Blueprint/Pickup/Relic/{Rarity}/DA_Relic_{Id}.DA_Relic_{Id}
+        // ============================================
+        public static readonly RelicInfo[] Relics =
+        {
+            // Common Relics
+            new("AdrenalineAmulet", "Adrenaline Amulet", "Common", "Fire rate boost after kills"),
+            new("BlacksmithAmulet", "Blacksmith Amulet", "Common", "Extra anvil choices"),
+            new("ComboRing", "Combo Ring", "Common", "Combo damage bonus"),
+            new("CoralAmulet", "Coral Amulet", "Common", "More chest loot choices"),
+            new("Icebreaker", "Icebreaker", "Common", "Bonus damage to frozen enemies"),
+            new("PortalRing", "Portal Ring", "Common", "Portal-related bonuses"),
+            new("RingOfArmor", "Ring Of Armor", "Common", "Bonus armor"),
+            new("RingOfDestruction", "Ring Of Destruction", "Common", "Damage bonus"),
+            new("RingOfHealing", "Ring Of Healing", "Common", "Health regeneration"),
+            new("RingOfHealthyTurrets", "Ring Of Healthy Turrets", "Common", "Turret health boost"),
+            new("RingOfReloading", "Ring Of Reloading", "Common", "Faster reload"),
+            new("RingOfVigor", "Ring Of Vigor", "Common", "Max health per island"),
+            new("TonysAmulet", "Tony's Amulet", "Common", "More shop items"),
+
+            // Epic Relics
+            new("AmmoRing", "Ammo Ring", "Epic", "Ammo bonuses"),
+            new("ArcaneRing", "Arcane Ring", "Epic", "Arcane damage boost"),
+            new("BlacksmithRing", "Blacksmith Ring", "Epic", "Better anvil options"),
+            new("DuplicationRing", "Duplication Ring", "Epic", "Chance to duplicate items"),
+            new("EtherealArmor", "Ethereal Armor", "Epic", "Ethereal protection"),
+            new("FireRing", "Fire Ring", "Epic", "Fire damage boost"),
+            new("FullMetalJacket", "Full Metal Jacket", "Epic", "Armor piercing"),
+            new("IceRing", "Ice Ring", "Epic", "Ice damage boost"),
+            new("LightningRing", "Lightning Ring", "Epic", "Lightning damage boost"),
+            new("PoisonRing", "Poison Ring", "Epic", "Poison damage boost"),
+            new("RingOfDefense", "Ring Of Defense", "Epic", "Damage reduction"),
+            new("RingOfDeflection", "Ring Of Deflection", "Epic", "Block chance"),
+            new("RingOfDividends", "Ring Of Dividends", "Epic", "Crystal multiplier"),
+            new("RingOfFury", "Ring Of Fury", "Epic", "Damage when low health"),
+            new("RingOfPotential", "Ring Of Potential", "Epic", "Legendary chest chance"),
+            new("RingOfPower", "Ring Of Power", "Epic", "Raw damage increase"),
+            new("RingOfPrecision", "Ring Of Precision", "Epic", "Critical hit chance"),
+            new("RingOfReinforcement", "Ring Of Reinforcement", "Epic", "Extra armor plates"),
+            new("RingOfRepulsion", "Ring Of Repulsion", "Epic", "Knockback enemies"),
+            new("RingOfValue", "Ring Of Value", "Epic", "Better item values"),
+            new("RingOfWisdom", "Ring Of Wisdom", "Epic", "Crit chance per island"),
+            new("SkillRing", "Skill Ring", "Epic", "Ability cooldown reduction"),
+            new("TimeRing", "Time Ring", "Epic", "DOT damage increase"),
+            new("TurboRing", "Turbo Ring", "Epic", "Fire rate per island"),
+
+            // Legendary Relics
+            new("AbilityRing", "Ability Ring", "Legendary", "Ability damage multiplier"),
+            new("PortalAmulet", "Portal Amulet", "Legendary", "Portal bonuses"),
+            new("RingOfGravity", "Ring Of Gravity", "Legendary", "Low gravity"),
+            new("RingOfLuck", "Ring Of Luck", "Legendary", "Increased luck"),
+            new("RingOfProtection", "Ring Of Protection", "Legendary", "Invulnerability chance"),
+            new("RingOfRegeneratingArmor", "Ring Of Regenerating Armor", "Legendary", "Armor per island"),
+            new("RingOfSwiftness", "Ring Of Swiftness", "Legendary", "Movement speed"),
+            new("TwinRing", "Twin Ring", "Legendary", "Turrets spawn in pairs"),
+
+            // Greed Relics
+            new("HighRoller", "High Roller", "Greed", "Risky chest spawns"),
+            new("HoarderBackpack", "Hoarder's Backpack", "Greed", "Extra inventory"),
+            new("OverspillGoblet", "Overspill Goblet", "Greed", "Crit to crit damage"),
+            new("RingOfFavoritism", "Ring Of Favoritism", "Greed", "Boost single mod"),
+            new("RingOfTankiness", "Ring Of Tankiness", "Greed", "Health up, speed down"),
+            new("TriggerRing", "Trigger Ring", "Greed", "Fire rate up, damage down"),
+            new("UpgradeRing", "Upgrade Ring", "Greed", "Guaranteed duplicates"),
+        };
+
+        // ============================================
+        // PERKS (from actual game data)
+        // Path format: /Game/Blueprint/Pickup/Perk/{Rarity}/DA_Perk_{Id}.DA_Perk_{Id}
         // ============================================
         public static readonly PerkInfo[] Perks =
         {
-            // Damage perks
-            new("DamageUp", "Damage Up", "Damage", "Increases damage dealt"),
-            new("CritChance", "Critical Chance", "Damage", "Increases critical hit chance"),
-            new("CritDamage", "Critical Damage", "Damage", "Increases critical hit damage"),
-            new("FireRate", "Fire Rate", "Damage", "Increases attack speed"),
-            new("Multishot", "Multishot", "Damage", "Chance to fire additional projectiles"),
-            new("Piercing", "Piercing", "Damage", "Projectiles pierce through enemies"),
-            new("ExplosiveRounds", "Explosive Rounds", "Damage", "Attacks explode on impact"),
-            new("ChainLightning", "Chain Lightning", "Damage", "Attacks chain to nearby enemies"),
+            // Common Perks
+            new("AntiCrit", "Anti Crit", "Common", "Reduced enemy crit damage"),
+            new("Banana", "Banana", "Common", "Health boost"),
+            new("BountyHunter", "Bounty Hunter", "Common", "Bonus crystals from elites"),
+            new("Bulletproof", "Bulletproof", "Common", "Projectile damage reduction"),
+            new("Bullseye", "Bullseye", "Common", "Accuracy bonus"),
+            new("CriticalArrow", "Critical Arrow", "Common", "Critical hit boost"),
+            new("CriticalThinking", "Critical Thinking", "Common", "Crit damage increase"),
+            new("CrystalCombo", "Crystal Combo", "Common", "Crystals from combos"),
+            new("CrystalFertilizer", "Crystal Fertilizer", "Common", "Crystal growth"),
+            new("DamageCombo", "Damage Combo", "Common", "Combo damage bonus"),
+            new("DangerClose", "Danger Close", "Common", "Close range damage"),
+            new("Driller", "Driller", "Common", "Pierce through enemies"),
+            new("EagleEye", "Eagle Eye", "Common", "Long range damage"),
+            new("ElementalExpert", "Elemental Expert", "Common", "Elemental damage boost"),
+            new("ElementalSpecialist", "Elemental Specialist", "Common", "Single element boost"),
+            new("Endurance", "Endurance", "Common", "Stamina increase"),
+            new("EnhancedTurrets", "Enhanced Turrets", "Common", "Turret upgrades"),
+            new("Equalizer", "Equalizer", "Common", "Balanced stats"),
+            new("Firestarter", "Firestarter", "Common", "Fire damage boost"),
+            new("Fortitude", "Fortitude", "Common", "Max health increase"),
+            new("HardTarget", "Hard Target", "Common", "Reduced damage taken"),
+            new("HighVoltage", "High Voltage", "Common", "Lightning damage boost"),
+            new("HotShot", "Hot Shot", "Common", "Fire rate on kill"),
+            new("HotSteam", "Hot Steam", "Common", "Steam damage"),
+            new("IceCold", "Ice Cold", "Common", "Ice damage boost"),
+            new("Magnify", "Magnify", "Common", "Damage multiplier"),
+            new("Mango", "Mango", "Common", "Health and speed"),
+            new("Paycheck", "Paycheck", "Common", "Crystals per island"),
+            new("PersonalSpace", "Personal Space", "Common", "Melee damage boost"),
+            new("PoisonousArmor", "Poisonous Armor", "Common", "Poison on hit"),
+            new("PotentMagic", "Potent Magic", "Common", "Arcane damage boost"),
+            new("PowerArmor", "Power Armor", "Common", "Armor and damage"),
+            new("PowerPunch", "Power Punch", "Common", "Melee damage"),
+            new("Regenerator", "Regenerator", "Common", "Health regen"),
+            new("Scavenger", "Scavenger", "Common", "Better drops"),
+            new("Sharpshooter", "Sharpshooter", "Common", "Accuracy and crit"),
+            new("Slugger", "Slugger", "Common", "Heavy weapon damage"),
+            new("Snatcher", "Snatcher", "Common", "Item attraction"),
+            new("SpecialDelivery", "Special Delivery", "Common", "Shop bonuses"),
+            new("SpeedDemon", "Speed Demon", "Common", "Movement speed"),
+            new("Stamina", "Stamina", "Common", "Sprint duration"),
+            new("StreamerLoot", "Streamer Loot", "Common", "Better loot chance"),
+            new("TonysBlackCard", "Tony's Black Card", "Common", "Shop discounts"),
+            new("Toxic", "Toxic", "Common", "Poison damage"),
+            new("ValuedCustomer", "Valued Customer", "Common", "Shop bonuses"),
+            new("Vitality", "Vitality", "Common", "Health boost"),
 
-            // Defense perks
-            new("MaxHealth", "Max Health", "Defense", "Increases maximum health"),
-            new("HealthRegen", "Health Regen", "Defense", "Regenerate health over time"),
-            new("Armor", "Armor", "Defense", "Reduces damage taken"),
-            new("DodgeChance", "Dodge Chance", "Defense", "Chance to avoid damage"),
-            new("Shield", "Shield", "Defense", "Gain a protective shield"),
-            new("Lifesteal", "Lifesteal", "Defense", "Heal on dealing damage"),
-            new("DamageReduction", "Damage Reduction", "Defense", "Flat damage reduction"),
+            // Epic Perks
+            new("AllYouCanEat", "All You Can Eat", "Epic", "Food healing boost"),
+            new("AmberResin", "Amber Resin", "Epic", "Slow enemies on hit"),
+            new("Assassin", "Assassin", "Epic", "Backstab damage"),
+            new("BigChests", "Big Chests", "Epic", "Better chest loot"),
+            new("BonusCrystals", "Bonus Crystals", "Epic", "Extra crystals"),
+            new("Collector", "Collector", "Epic", "Item bonuses"),
+            new("CriticalBlast", "Critical Blast", "Epic", "Crit explosions"),
+            new("DamageAura", "Damage Aura", "Epic", "Damage aura"),
+            new("DoubleVision", "Double Vision", "Epic", "Double projectiles"),
+            new("ExplodingEnemies", "Exploding Enemies", "Epic", "Enemies explode on death"),
+            new("FlammableArmor", "Flammable Armor", "Epic", "Fire armor"),
+            new("Gemstone", "Gemstone", "Epic", "Crystal bonuses"),
+            new("GoldCoating", "Gold Coating", "Epic", "Golden weapon bonus"),
+            new("GrimReaper", "Grim Reaper", "Epic", "Death bonuses"),
+            new("HealthIsPower", "Health Is Power", "Epic", "Damage from health"),
+            new("MegaCrit", "Mega Crit", "Epic", "Massive crits"),
+            new("MoneyIsPower", "Money Is Power", "Epic", "Damage from crystals"),
+            new("OrbitingScythes", "Orbiting Scythes", "Epic", "Orbital damage"),
+            new("PerformanceBonus", "Performance Bonus", "Epic", "Combo rewards"),
+            new("PoisonAura", "Poison Aura", "Epic", "Poison aura"),
+            new("SilverLining", "Silver Lining", "Epic", "Bonus on low health"),
+            new("SpeedIsPower", "Speed Is Power", "Epic", "Damage from speed"),
+            new("SturdyTotems", "Sturdy Totems", "Epic", "Totem bonuses"),
+            new("Survivor", "Survivor", "Epic", "Survival bonuses"),
+            new("TotemEnthusiast", "Totem Enthusiast", "Epic", "Totem bonuses"),
 
-            // Movement perks
-            new("MoveSpeed", "Move Speed", "Movement", "Increases movement speed"),
-            new("JumpHeight", "Jump Height", "Movement", "Increases jump height"),
-            new("DoubleJump", "Double Jump", "Movement", "Gain an extra jump"),
-            new("DashDistance", "Dash Distance", "Movement", "Increases dash range"),
-            new("DashCooldown", "Dash Cooldown", "Movement", "Reduces dash cooldown"),
+            // Legendary Perks
+            new("DaggerDash", "Dagger Dash", "Legendary", "Daggers on dash"),
+            new("FaultyChests", "Faulty Chests", "Legendary", "Explosive chests"),
+            new("FlammableEnemies", "Flammable Enemies", "Legendary", "Fire spread"),
+            new("FreezingEnemies", "Freezing Enemies", "Legendary", "Ice spread"),
+            new("IceDash", "Ice Dash", "Legendary", "Ice trail on dash"),
+            new("LevelUp", "Level Up", "Legendary", "Level bonuses"),
+            new("LightningDash", "Lightning Dash", "Legendary", "Lightning on dash"),
+            new("PoisonousEnemies", "Poisonous Enemies", "Legendary", "Poison spread"),
+            new("Powerslide", "Powerslide", "Legendary", "Slide damage"),
+            new("RareTreasure", "Rare Treasure", "Legendary", "Rare loot chance"),
 
-            // Utility perks
-            new("CooldownReduction", "Cooldown Reduction", "Utility", "Reduces ability cooldowns"),
-            new("LuckUp", "Luck Up", "Utility", "Increases item drop quality"),
-            new("XPGain", "XP Gain", "Utility", "Increases experience gained"),
-            new("GoldFind", "Gold Find", "Utility", "Increases crystal drops"),
-            new("MagnetRange", "Magnet Range", "Utility", "Increases pickup range"),
-            new("ReviveChance", "Second Wind", "Utility", "Chance to revive on death"),
+            // Greed Perks
+            new("BigBones", "Big Bones", "Greed", "Size and health increase"),
+            new("Bribe", "Bribe", "Greed", "Pay for bonuses"),
+            new("BruteForce", "Brute Force", "Greed", "Damage up, defense down"),
+            new("DamageSeeker", "Damage Seeker", "Greed", "Risk for damage"),
+            new("DoubleTrouble", "Double Trouble", "Greed", "Double effects"),
+            new("GlassCannon", "Glass Cannon", "Greed", "High damage, low health"),
+            new("Juggernaut", "Juggernaut", "Greed", "Unstoppable force"),
+            new("LeapOfFaith", "Leap Of Faith", "Greed", "Random health change"),
+            new("LimitedLoot", "Limited Loot", "Greed", "Less but better loot"),
+            new("RisingStar", "Rising Star", "Greed", "Growing power"),
+            new("SlipperySlope", "Slippery Slope", "Greed", "Speed and risk"),
+            new("UpTheAnte", "Up The Ante", "Greed", "Increasing stakes"),
+            new("Workaholic", "Workaholic", "Greed", "Work harder bonuses"),
         };
 
         // ============================================
@@ -704,6 +999,55 @@ namespace UnrealSavEditor.Models
             Description = description;
             RequiredValue = requiredValue;
             AssetPath = $"/Game/Blueprint/Challenges/DA_Challenge_{id}.DA_Challenge_{id}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a mod (weapon mod, ability mod, or melee mod)
+    /// </summary>
+    public class ModInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Rarity { get; }
+        public string Description { get; }
+
+        public ModInfo(string id, string displayName, string rarity, string description)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Rarity = rarity;
+            Description = description;
+        }
+
+        /// <summary>
+        /// Get the asset path for this mod
+        /// </summary>
+        public string GetAssetPath(string modType)
+        {
+            // modType is "WeaponMod", "AbilityMod", or "MeleeMod"
+            return $"/Game/Blueprint/Pickup/{modType}/{Rarity}/DA_{modType}_{Id}.DA_{modType}_{Id}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a relic
+    /// </summary>
+    public class RelicInfo
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public string Rarity { get; }
+        public string Description { get; }
+        public string AssetPath { get; }
+
+        public RelicInfo(string id, string displayName, string rarity, string description)
+        {
+            Id = id;
+            DisplayName = displayName;
+            Rarity = rarity;
+            Description = description;
+            AssetPath = $"/Game/Blueprint/Pickup/Relic/{rarity}/DA_Relic_{id}.DA_Relic_{id}";
         }
     }
 }

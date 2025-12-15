@@ -1368,6 +1368,19 @@ namespace UnrealSavEditor.Models
             // Also get ranked items count for additional info
             summary.RankedItems = GetRankedItemsCount();
 
+            // Mods counts
+            summary.TotalWeaponMods = CrabChampionsData.WeaponMods.Length;
+            summary.TotalAbilityMods = CrabChampionsData.AbilityMods.Length;
+            summary.TotalMeleeMods = CrabChampionsData.MeleeMods.Length;
+            summary.TotalRelics = CrabChampionsData.Relics.Length;
+            summary.TotalPerks = CrabChampionsData.Perks.Length;
+
+            summary.UnlockedWeaponMods = GetUnlockedWeaponModsCount();
+            summary.UnlockedAbilityMods = GetUnlockedAbilityModsCount();
+            summary.UnlockedMeleeMods = GetUnlockedMeleeModsCount();
+            summary.UnlockedRelics = GetUnlockedRelicsCount();
+            summary.UnlockedPerks = GetUnlockedPerksCount();
+
             // Cosmetics counts
             summary.TotalSkins = CrabChampionsData.CharacterSkins.Length + CrabChampionsData.WeaponSkins.Length;
             summary.TotalEmotes = CrabChampionsData.Emotes.Length;
@@ -1614,26 +1627,363 @@ namespace UnrealSavEditor.Models
         // ============================================
 
         /// <summary>
-        /// Unlock all perks/upgrades by setting boolean flags to true.
-        /// Does NOT modify arrays to prevent save corruption.
+        /// Unlock all perks by adding them to the UnlockedPerks array
         /// </summary>
         public int UnlockAllPerks()
         {
             int unlocked = 0;
 
-            // Only modify boolean unlock flags - NEVER add to arrays
-            foreach (var perk in CrabChampionsData.Perks)
+            // Find or create the UnlockedPerks array
+            string[] possibleNames = { "UnlockedPerks", "unlockedperks", "Perks", "perks", "OwnedPerks" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
             {
-                var prop = FindProperty($"{perk.Id}Unlocked", $"Has{perk.Id}",
-                    $"Unlocked{perk.Id}", $"{perk.Id}_Unlocked", $"b{perk.Id}Unlocked");
-                if (prop is BoolProperty bp && !bp.Value)
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
                 {
-                    bp.Value = true;
-                    unlocked++;
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedPerks");
+            }
+
+            if (ap != null)
+            {
+                foreach (var perk in CrabChampionsData.Perks)
+                {
+                    var assetPath = $"/Game/Blueprint/Pickup/Perk/{perk.Category}/DA_Perk_{perk.Id}.DA_Perk_{perk.Id}";
+                    if (!ArrayContainsPath(ap, assetPath))
+                    {
+                        ap.Items.Add(assetPath);
+                        unlocked++;
+                    }
                 }
             }
 
             return unlocked;
+        }
+
+        // ============================================
+        // UNLOCK ALL WEAPON MODS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all weapon mods by adding them to the UnlockedWeaponMods array
+        /// </summary>
+        public int UnlockAllWeaponMods()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedWeaponMods", "unlockedweaponmods", "WeaponMods", "weaponmods", "OwnedWeaponMods" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedWeaponMods");
+            }
+
+            if (ap != null)
+            {
+                foreach (var mod in CrabChampionsData.WeaponMods)
+                {
+                    var assetPath = mod.GetAssetPath("WeaponMod");
+                    if (!ArrayContainsPath(ap, assetPath))
+                    {
+                        ap.Items.Add(assetPath);
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        // ============================================
+        // UNLOCK ALL ABILITY MODS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all ability mods by adding them to the UnlockedAbilityMods array
+        /// </summary>
+        public int UnlockAllAbilityMods()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedAbilityMods", "unlockedabilitymods", "AbilityMods", "abilitymods", "OwnedAbilityMods" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedAbilityMods");
+            }
+
+            if (ap != null)
+            {
+                foreach (var mod in CrabChampionsData.AbilityMods)
+                {
+                    var assetPath = mod.GetAssetPath("AbilityMod");
+                    if (!ArrayContainsPath(ap, assetPath))
+                    {
+                        ap.Items.Add(assetPath);
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        // ============================================
+        // UNLOCK ALL MELEE MODS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all melee mods by adding them to the UnlockedMeleeMods array
+        /// </summary>
+        public int UnlockAllMeleeMods()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedMeleeMods", "unlockedmeleemods", "MeleeMods", "meleemods", "OwnedMeleeMods" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedMeleeMods");
+            }
+
+            if (ap != null)
+            {
+                foreach (var mod in CrabChampionsData.MeleeMods)
+                {
+                    var assetPath = mod.GetAssetPath("MeleeMod");
+                    if (!ArrayContainsPath(ap, assetPath))
+                    {
+                        ap.Items.Add(assetPath);
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        // ============================================
+        // UNLOCK ALL RELICS
+        // ============================================
+
+        /// <summary>
+        /// Unlock all relics by adding them to the UnlockedRelics array
+        /// </summary>
+        public int UnlockAllRelics()
+        {
+            int unlocked = 0;
+
+            string[] possibleNames = { "UnlockedRelics", "unlockedrelics", "Relics", "relics", "OwnedRelics" };
+
+            ArrayProperty? ap = null;
+            foreach (var name in possibleNames)
+            {
+                var prop = FindPropertyExact(name);
+                if (prop is ArrayProperty arr && arr.InnerType == "ObjectProperty")
+                {
+                    ap = arr;
+                    break;
+                }
+            }
+
+            if (ap == null)
+            {
+                ap = FindOrCreateObjectArray("UnlockedRelics");
+            }
+
+            if (ap != null)
+            {
+                foreach (var relic in CrabChampionsData.Relics)
+                {
+                    if (!ArrayContainsPath(ap, relic.AssetPath))
+                    {
+                        ap.Items.Add(relic.AssetPath);
+                        unlocked++;
+                    }
+                }
+            }
+
+            return unlocked;
+        }
+
+        // ============================================
+        // UNLOCK ALL MODS (combined)
+        // ============================================
+
+        /// <summary>
+        /// Unlock all mods (weapon, ability, melee)
+        /// </summary>
+        public (int weaponMods, int abilityMods, int meleeMods) UnlockAllMods()
+        {
+            return (UnlockAllWeaponMods(), UnlockAllAbilityMods(), UnlockAllMeleeMods());
+        }
+
+        // ============================================
+        // UNLOCK EVERYTHING
+        // ============================================
+
+        /// <summary>
+        /// Unlock absolutely everything in the game
+        /// </summary>
+        public UnlockEverythingResult UnlockEverything()
+        {
+            var result = new UnlockEverythingResult();
+
+            // Weapons, abilities, melee
+            result.Weapons = UnlockAllWeapons();
+            result.Abilities = UnlockAllAbilities();
+            result.Melee = UnlockAllMelee();
+
+            // Mods
+            result.WeaponMods = UnlockAllWeaponMods();
+            result.AbilityMods = UnlockAllAbilityMods();
+            result.MeleeMods = UnlockAllMeleeMods();
+
+            // Relics and perks
+            result.Relics = UnlockAllRelics();
+            result.Perks = UnlockAllPerks();
+
+            // Cosmetics
+            var (charSkins, weapSkins) = UnlockAllSkins();
+            result.CharacterSkins = charSkins;
+            result.WeaponSkins = weapSkins;
+            result.Emotes = UnlockAllEmotes();
+            result.Banners = UnlockAllBanners();
+            result.Titles = UnlockAllTitles();
+
+            // Set to prismatic
+            result.PrismaticItems = SetAllRankedItemsToPrismatic();
+
+            // Difficulties
+            result.Difficulties = UnlockAllDifficulties();
+
+            // Max currency
+            MaxCurrency();
+            result.CurrencyMaxed = true;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get counts of unlocked mods
+        /// </summary>
+        public int GetUnlockedWeaponModsCount()
+        {
+            var prop = FindPropertyExact("UnlockedWeaponMods");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        public int GetUnlockedAbilityModsCount()
+        {
+            var prop = FindPropertyExact("UnlockedAbilityMods");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        public int GetUnlockedMeleeModsCount()
+        {
+            var prop = FindPropertyExact("UnlockedMeleeMods");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        public int GetUnlockedRelicsCount()
+        {
+            var prop = FindPropertyExact("UnlockedRelics");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+
+        public int GetUnlockedPerksCount()
+        {
+            var prop = FindPropertyExact("UnlockedPerks");
+            if (prop is ArrayProperty ap)
+                return ap.Items.Count;
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Result of unlocking everything
+    /// </summary>
+    public class UnlockEverythingResult
+    {
+        public int Weapons { get; set; }
+        public int Abilities { get; set; }
+        public int Melee { get; set; }
+        public int WeaponMods { get; set; }
+        public int AbilityMods { get; set; }
+        public int MeleeMods { get; set; }
+        public int Relics { get; set; }
+        public int Perks { get; set; }
+        public int CharacterSkins { get; set; }
+        public int WeaponSkins { get; set; }
+        public int Emotes { get; set; }
+        public int Banners { get; set; }
+        public int Titles { get; set; }
+        public int PrismaticItems { get; set; }
+        public int Difficulties { get; set; }
+        public bool CurrencyMaxed { get; set; }
+
+        public int TotalUnlocked => Weapons + Abilities + Melee + WeaponMods + AbilityMods +
+                                    MeleeMods + Relics + Perks + CharacterSkins + WeaponSkins +
+                                    Emotes + Banners + Titles + PrismaticItems + Difficulties +
+                                    (CurrencyMaxed ? 1 : 0);
+
+        public override string ToString()
+        {
+            return $"Unlocked: {Weapons} weapons, {Abilities} abilities, {Melee} melee, " +
+                   $"{WeaponMods} weapon mods, {AbilityMods} ability mods, {MeleeMods} melee mods, " +
+                   $"{Relics} relics, {Perks} perks, {CharacterSkins} character skins, " +
+                   $"{WeaponSkins} weapon skins, {Emotes} emotes, {Banners} banners, " +
+                   $"{Titles} titles, {PrismaticItems} prismatic items, {Difficulties} difficulties" +
+                   (CurrencyMaxed ? ", currency maxed" : "");
         }
     }
 
@@ -1654,6 +2004,7 @@ namespace UnrealSavEditor.Models
     /// </summary>
     public class UnlockSummary
     {
+        // Weapons
         public int UnlockedWeapons { get; set; }
         public int TotalWeapons { get; set; }
         public int UnlockedAbilities { get; set; }
@@ -1662,6 +2013,18 @@ namespace UnrealSavEditor.Models
         public int TotalMelee { get; set; }
         public int TotalDifficulties { get; set; }
         public int RankedItems { get; set; }
+
+        // Mods
+        public int UnlockedWeaponMods { get; set; }
+        public int TotalWeaponMods { get; set; }
+        public int UnlockedAbilityMods { get; set; }
+        public int TotalAbilityMods { get; set; }
+        public int UnlockedMeleeMods { get; set; }
+        public int TotalMeleeMods { get; set; }
+        public int UnlockedRelics { get; set; }
+        public int TotalRelics { get; set; }
+        public int UnlockedPerks { get; set; }
+        public int TotalPerks { get; set; }
 
         // Cosmetics
         public int UnlockedSkins { get; set; }
@@ -1673,17 +2036,31 @@ namespace UnrealSavEditor.Models
         public int UnlockedTitles { get; set; }
         public int TotalTitles { get; set; }
 
+        // Status strings
         public string WeaponsStatus => $"{UnlockedWeapons}/{TotalWeapons}";
         public string AbilitiesStatus => $"{UnlockedAbilities}/{TotalAbilities}";
         public string MeleeStatus => $"{UnlockedMelee}/{TotalMelee}";
+        public string WeaponModsStatus => $"{UnlockedWeaponMods}/{TotalWeaponMods}";
+        public string AbilityModsStatus => $"{UnlockedAbilityMods}/{TotalAbilityMods}";
+        public string MeleeModsStatus => $"{UnlockedMeleeMods}/{TotalMeleeMods}";
+        public string RelicsStatus => $"{UnlockedRelics}/{TotalRelics}";
+        public string PerksStatus => $"{UnlockedPerks}/{TotalPerks}";
         public string SkinsStatus => $"{UnlockedSkins}/{TotalSkins}";
         public string EmotesStatus => $"{UnlockedEmotes}/{TotalEmotes}";
         public string BannersStatus => $"{UnlockedBanners}/{TotalBanners}";
         public string TitlesStatus => $"{UnlockedTitles}/{TotalTitles}";
-        public int TotalUnlocked => UnlockedWeapons + UnlockedAbilities + UnlockedMelee;
-        public int TotalItems => TotalWeapons + TotalAbilities + TotalMelee;
+
+        // Totals
+        public int TotalUnlocked => UnlockedWeapons + UnlockedAbilities + UnlockedMelee +
+                                    UnlockedWeaponMods + UnlockedAbilityMods + UnlockedMeleeMods +
+                                    UnlockedRelics + UnlockedPerks;
+        public int TotalItems => TotalWeapons + TotalAbilities + TotalMelee +
+                                 TotalWeaponMods + TotalAbilityMods + TotalMeleeMods +
+                                 TotalRelics + TotalPerks;
         public int TotalCosmetics => TotalSkins + TotalEmotes + TotalBanners + TotalTitles;
         public int UnlockedCosmetics => UnlockedSkins + UnlockedEmotes + UnlockedBanners + UnlockedTitles;
+        public int TotalMods => TotalWeaponMods + TotalAbilityMods + TotalMeleeMods;
+        public int UnlockedMods => UnlockedWeaponMods + UnlockedAbilityMods + UnlockedMeleeMods;
     }
 
     /// <summary>
