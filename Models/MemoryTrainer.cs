@@ -215,6 +215,128 @@ namespace CrabChampionsSaveEditor.Models
         }
 
         /// <summary>
+        /// ECrabEnhanceableType enum - whether items can be enhanced (from .rdata:0x1432987C0)
+        /// </summary>
+        public static class ECrabEnhanceableType
+        {
+            public const string NotEnhanceable = "ECrabEnhanceableType::NotEnhanceable";
+            public const string Enhanceable = "ECrabEnhanceableType::Enhanceable";
+            public const string EnhanceableNonElemental = "ECrabEnhanceableType::EnhanceableNonElemental";
+            public const string EnhanceableNonHoming = "ECrabEnhanceableType::EnhanceableNonHoming";
+
+            public static readonly string[] AllValues = new[]
+            {
+                NotEnhanceable, Enhanceable, EnhanceableNonElemental, EnhanceableNonHoming
+            };
+        }
+
+        /// <summary>
+        /// ECrabPickupTag enum - tags for categorizing pickups (from .rdata:0x143298890)
+        /// Used for filtering/searching items by elemental type or effect
+        /// </summary>
+        public static class ECrabPickupTag
+        {
+            public const string None = "ECrabPickupTag::None";               // 0
+            public const string Healing = "ECrabPickupTag::Healing";         // 1
+            public const string DamageOverTime = "ECrabPickupTag::DamageOverTime"; // 2
+            public const string Critical = "ECrabPickupTag::Critical";       // 3
+            public const string Speed = "ECrabPickupTag::Speed";             // 4
+            public const string Bounce = "ECrabPickupTag::Bounce";           // 5
+            public const string Ice = "ECrabPickupTag::Ice";                 // 6
+            public const string Fire = "ECrabPickupTag::Fire";               // 7
+            public const string Lightning = "ECrabPickupTag::Lightning";     // 8
+            public const string Poison = "ECrabPickupTag::Poison";           // 9
+            public const string Arcane = "ECrabPickupTag::Arcane";           // 10
+            public const string Turret = "ECrabPickupTag::Turret";           // 11
+            public const string Combo = "ECrabPickupTag::Combo";             // 12
+            public const string GlueShot = "ECrabPickupTag::GlueShot";       // 13
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Healing, DamageOverTime, Critical, Speed, Bounce,
+                Ice, Fire, Lightning, Poison, Arcane, Turret, Combo, GlueShot
+            };
+        }
+
+        /// <summary>
+        /// ECrabRarity enum - item rarity for loot pools (from .rdata:0x143298AF0)
+        /// Note: Different from ECrabRank which is for weapon mastery levels!
+        /// </summary>
+        public static class ECrabRarity
+        {
+            public const string None = "ECrabRarity::None";           // 0
+            public const string Common = "ECrabRarity::Common";       // 1
+            public const string Epic = "ECrabRarity::Epic";           // 2
+            public const string Legendary = "ECrabRarity::Legendary"; // 3
+            public const string Greed = "ECrabRarity::Greed";         // 4
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Common, Epic, Legendary, Greed
+            };
+        }
+
+        /// <summary>
+        /// ECrabLootPool enum - loot pool categories for spawning items (from .rdata:0x143298BD0)
+        /// </summary>
+        public static class ECrabLootPool
+        {
+            public const string None = "ECrabLootPool::None";                         // 0
+            public const string Damage = "ECrabLootPool::Damage";                     // 1
+            public const string Critical = "ECrabLootPool::Critical";                 // 2
+            public const string Elemental = "ECrabLootPool::Elemental";               // 3
+            public const string Speed = "ECrabLootPool::Speed";                       // 4
+            public const string Luck = "ECrabLootPool::Luck";                         // 5
+            public const string Health = "ECrabLootPool::Health";                     // 6
+            public const string Economy = "ECrabLootPool::Economy";                   // 7
+            public const string Skill = "ECrabLootPool::Skill";                       // 8
+            public const string Greed = "ECrabLootPool::Greed";                       // 9
+            public const string Upgrade = "ECrabLootPool::Upgrade";                   // 10
+            public const string Random = "ECrabLootPool::Random";                     // 11
+            public const string Anvil = "ECrabLootPool::Anvil";                       // 12
+            public const string RelicChest = "ECrabLootPool::RelicChest";             // 13
+            public const string SpikedChest = "ECrabLootPool::SpikedChest";           // 14
+            public const string EpicChest = "ECrabLootPool::EpicChest";               // 15
+            public const string LegendaryChest = "ECrabLootPool::LegendaryChest";     // 16
+            public const string RegenerationChest = "ECrabLootPool::RegenerationChest"; // 17
+            public const string KeyChest = "ECrabLootPool::KeyChest";                 // 18
+            public const string Lesser = "ECrabLootPool::Lesser";                     // 19
+            public const string NoRelicsOrConsumables = "ECrabLootPool::NoRelicsOrConsumables"; // 20
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Damage, Critical, Elemental, Speed, Luck, Health, Economy, Skill,
+                Greed, Upgrade, Random, Anvil, RelicChest, SpikedChest, EpicChest,
+                LegendaryChest, RegenerationChest, KeyChest, Lesser, NoRelicsOrConsumables
+            };
+        }
+
+        /// <summary>
+        /// ECrabPickupType enum - the type of pickup item (from .rdata:0x143298F70)
+        /// Used to determine which inventory/handler system processes the item
+        /// </summary>
+        public static class ECrabPickupType
+        {
+            public const string None = "ECrabPickupType::None";               // 0
+            public const string Weapon = "ECrabPickupType::Weapon";           // 1
+            public const string Ability = "ECrabPickupType::Ability";         // 2
+            public const string Melee = "ECrabPickupType::Melee";             // 3
+            public const string WeaponMod = "ECrabPickupType::WeaponMod";     // 4
+            public const string AbilityMod = "ECrabPickupType::AbilityMod";   // 5
+            public const string MeleeMod = "ECrabPickupType::MeleeMod";       // 6
+            public const string Perk = "ECrabPickupType::Perk";               // 7
+            public const string Relic = "ECrabPickupType::Relic";             // 8
+            public const string Consumable = "ECrabPickupType::Consumable";   // 9
+            public const string Random = "ECrabPickupType::Random";           // 10
+
+            public static readonly string[] AllValues = new[]
+            {
+                None, Weapon, Ability, Melee, WeaponMod, AbilityMod,
+                MeleeMod, Perk, Relic, Consumable, Random
+            };
+        }
+
+        /// <summary>
         /// UE4 UClass names for game objects (from .rdata section)
         /// These are the internal class names used by UE4 reflection
         /// </summary>
