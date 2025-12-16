@@ -1316,19 +1316,426 @@ namespace CrabChampionsSaveEditor.Models
 
         #endregion
 
+        #region Player State Cache
+
+        /// <summary>
+        /// Cached player state for efficient access
+        /// </summary>
+        public class PlayerState
+        {
+            public IntPtr CharacterAddress { get; set; }
+            public IntPtr HealthComponentAddress { get; set; }
+            public IntPtr PlayerStateAddress { get; set; }
+            public IntPtr WeaponAddress { get; set; }
+            public bool IsValid { get; set; }
+            public DateTime LastUpdated { get; set; }
+        }
+
+        private PlayerState _cachedPlayer = new();
+        private readonly object _playerLock = new();
+
+        /// <summary>
+        /// Find and cache player pointers by scanning for known patterns
+        /// </summary>
+        public PlayerState FindPlayer()
+        {
+            lock (_playerLock)
+            {
+                if (!IsAttached)
+                {
+                    _cachedPlayer.IsValid = false;
+                    return _cachedPlayer;
+                }
+
+                StatusChanged?.Invoke(this, "Searching for player...");
+
+                // Method 1: Try GWorld chain
+                var gworld = ReadGWorld();
+                if (gworld != IntPtr.Zero)
+                {
+                    // UWorld -> GameState -> PlayerArray -> PlayerState -> Pawn
+                    // Standard UE4 path: GWorld -> +0x180 (GameState) -> +0x2A8 (PlayerArray)
+
+                    // Try to find GameState
+                    long gameState = ReadInt64(IntPtr.Add(gworld, 0x180));
+                    if (gameState > 0x10000)
+                    {
+                        StatusChanged?.Invoke(this, $"Found GameState: {gameState:X}");
+                        _cachedPlayer.PlayerStateAddress = new IntPtr(gameState);
+                    }
+                }
+
+                // Method 2: Scan for health value pattern
+                // Most players start with 100 health, search for float 100.0
+                if (_cachedPlayer.HealthComponentAddress == IntPtr.Zero)
+                {
+                    var healthAddresses = ScanForFloatValue(100.0f);
+                    if (healthAddresses.Count > 0)
+                    {
+                        // Filter to find the one that looks like a health component
+                        foreach (var addr in healthAddresses.Take(20))
+                        {
+                            // Check if this could be HealthInfo struct (has max health nearby)
+                            float possibleMaxHealth = ReadFloat(IntPtr.Add(addr, 4));
+                            if (possibleMaxHealth >= 100.0f && possibleMaxHealth <= 1000.0f)
+                            {
+                                // Likely found HealthInfo, backtrack to find component
+                                _cachedPlayer.HealthComponentAddress = IntPtr.Subtract(addr, (int)SDKOffsets.HI_CurrentHealth);
+                                StatusChanged?.Invoke(this, $"Possible HealthComponent at: {_cachedPlayer.HealthComponentAddress:X}");
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                _cachedPlayer.IsValid = _cachedPlayer.HealthComponentAddress != IntPtr.Zero ||
+                                        _cachedPlayer.PlayerStateAddress != IntPtr.Zero;
+                _cachedPlayer.LastUpdated = DateTime.Now;
+
+                return _cachedPlayer;
+            }
+        }
+
+        /// <summary>
+        /// Scan memory for a specific float value
+        /// </summary>
+        private List<IntPtr> ScanForFloatValue(float value, float tolerance = 0.01f)
+        {
+            var results = new List<IntPtr>();
+            if (!IsAttached) return results;
+
+            byte[] pattern = BitConverter.GetBytes(value);
+
+            // Scan heap regions where game objects live
+            IntPtr address = new IntPtr(0x10000000000); // Start in typical heap range
+            IntPtr maxAddress = new IntPtr(0x7FFFFFFFFFFF);
+
+            int found = 0;
+            while (address.ToInt64() < maxAddress.ToInt64() && found < 100)
+            {
+                if (!VirtualQueryEx(ProcessHandle, address, out var memInfo, (uint)Marshal.SizeOf<MEMORY_BASIC_INFORMATION>()))
+                    break;
+
+                if (memInfo.State == MEM_COMMIT && memInfo.RegionSize.ToInt64() > 0)
+                {
+                    var regionSize = Math.Min((int)memInfo.RegionSize.ToInt64(), 0x1000000);
+                    var buffer = ReadMemory(memInfo.BaseAddress, regionSize);
+
+                    if (buffer != null)
+                    {
+                        for (int i = 0; i <= buffer.Length - 4; i += 4)
+                        {
+                            float readValue = BitConverter.ToSingle(buffer, i);
+                            if (Math.Abs(readValue - value) < tolerance)
+                            {
+                                results.Add(IntPtr.Add(memInfo.BaseAddress, i));
+                                found++;
+                                if (found >= 100) break;
+                            }
+                        }
+                    }
+                }
+
+                address = IntPtr.Add(memInfo.BaseAddress, (int)memInfo.RegionSize.ToInt64());
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Set the player's health component address manually (from Cheat Engine)
+        /// </summary>
+        public void SetHealthComponentAddress(string hexAddress)
+        {
+            if (hexAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                hexAddress = hexAddress[2..];
+
+            if (long.TryParse(hexAddress, System.Globalization.NumberStyles.HexNumber, null, out long addr))
+            {
+                lock (_playerLock)
+                {
+                    _cachedPlayer.HealthComponentAddress = new IntPtr(addr);
+                    _cachedPlayer.IsValid = true;
+                    _cachedPlayer.LastUpdated = DateTime.Now;
+                }
+                StatusChanged?.Invoke(this, $"HealthComponent set to {addr:X}");
+            }
+        }
+
+        /// <summary>
+        /// Set the weapon object address manually (from Cheat Engine - use "Find what writes" on ammo)
+        /// </summary>
+        public void SetWeaponAddress(string hexAddress)
+        {
+            if (hexAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                hexAddress = hexAddress[2..];
+
+            if (long.TryParse(hexAddress, System.Globalization.NumberStyles.HexNumber, null, out long addr))
+            {
+                lock (_playerLock)
+                {
+                    _cachedPlayer.WeaponAddress = new IntPtr(addr);
+                }
+                StatusChanged?.Invoke(this, $"Weapon set to {addr:X}");
+            }
+        }
+
+        #endregion
+
+        #region Direct Memory Cheats (Using Cached Addresses)
+
+        /// <summary>
+        /// Read current health directly from cached address
+        /// </summary>
+        public float? GetHealth()
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return null;
+
+            // HealthComponent + HealthInfo offset + CurrentHealth offset
+            IntPtr healthAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentHealth));
+            return ReadFloat(healthAddr);
+        }
+
+        /// <summary>
+        /// Read max health directly from cached address
+        /// </summary>
+        public float? GetMaxHealth()
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return null;
+
+            IntPtr maxHealthAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentMaxHealth));
+            return ReadFloat(maxHealthAddr);
+        }
+
+        /// <summary>
+        /// Set health directly using cached address
+        /// </summary>
+        public bool SetHealth(float value)
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return false;
+
+            IntPtr healthAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentHealth));
+            return WriteFloat(healthAddr, value);
+        }
+
+        /// <summary>
+        /// Set max health directly using cached address
+        /// </summary>
+        public bool SetMaxHealthDirect(float value)
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return false;
+
+            IntPtr maxHealthAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentMaxHealth));
+            return WriteFloat(maxHealthAddr, value);
+        }
+
+        /// <summary>
+        /// Get current armor plates
+        /// </summary>
+        public int? GetArmorPlates()
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return null;
+
+            IntPtr armorAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentArmorPlates));
+            return ReadInt32(armorAddr);
+        }
+
+        /// <summary>
+        /// Set armor plates
+        /// </summary>
+        public bool SetArmorPlates(int value)
+        {
+            if (!IsAttached || _cachedPlayer.HealthComponentAddress == IntPtr.Zero) return false;
+
+            IntPtr armorAddr = IntPtr.Add(_cachedPlayer.HealthComponentAddress,
+                (int)(SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentArmorPlates));
+            return WriteInt32(armorAddr, value);
+        }
+
+        /// <summary>
+        /// Get current weapon ammo
+        /// </summary>
+        public int? GetAmmo()
+        {
+            if (!IsAttached || _cachedPlayer.WeaponAddress == IntPtr.Zero) return null;
+
+            IntPtr ammoAddr = IntPtr.Add(_cachedPlayer.WeaponAddress, (int)SDKOffsets.Weapon_Ammo);
+            return ReadInt32(ammoAddr);
+        }
+
+        /// <summary>
+        /// Set weapon ammo
+        /// </summary>
+        public bool SetAmmo(int value)
+        {
+            if (!IsAttached || _cachedPlayer.WeaponAddress == IntPtr.Zero) return false;
+
+            IntPtr ammoAddr = IntPtr.Add(_cachedPlayer.WeaponAddress, (int)SDKOffsets.Weapon_Ammo);
+            return WriteInt32(ammoAddr, value);
+        }
+
+        #endregion
+
         #region Cheat Functions
+
+        /// <summary>
+        /// Trainer state for toggle-able cheats
+        /// </summary>
+        public class TrainerState
+        {
+            public bool GodModeEnabled { get; set; }
+            public bool InfiniteAmmoEnabled { get; set; }
+            public bool InfiniteCrystalsEnabled { get; set; }
+            public bool OneHitKillEnabled { get; set; }
+            public float GodModeHealth { get; set; } = 999999f;
+            public int InfiniteAmmoValue { get; set; } = 999;
+            public int InfiniteCrystalsValue { get; set; } = 999999;
+        }
+
+        public TrainerState State { get; } = new();
+
+        private System.Threading.Timer? _cheatTimer;
+        private bool _cheatLoopRunning;
+
+        /// <summary>
+        /// Start the cheat loop that continuously applies enabled cheats
+        /// </summary>
+        public void StartCheatLoop(int intervalMs = 100)
+        {
+            if (_cheatLoopRunning) return;
+
+            _cheatLoopRunning = true;
+            _cheatTimer = new System.Threading.Timer(CheatLoopTick, null, 0, intervalMs);
+            StatusChanged?.Invoke(this, $"Cheat loop started (interval: {intervalMs}ms)");
+        }
+
+        /// <summary>
+        /// Stop the cheat loop
+        /// </summary>
+        public void StopCheatLoop()
+        {
+            _cheatLoopRunning = false;
+            _cheatTimer?.Dispose();
+            _cheatTimer = null;
+            StatusChanged?.Invoke(this, "Cheat loop stopped");
+        }
+
+        private void CheatLoopTick(object? state)
+        {
+            if (!IsAttached || !_cheatLoopRunning) return;
+
+            try
+            {
+                // God Mode - keep health maxed
+                if (State.GodModeEnabled && _cachedPlayer.HealthComponentAddress != IntPtr.Zero)
+                {
+                    SetHealth(State.GodModeHealth);
+                    SetMaxHealthDirect(State.GodModeHealth);
+                }
+
+                // Infinite Ammo - keep ammo maxed
+                if (State.InfiniteAmmoEnabled && _cachedPlayer.WeaponAddress != IntPtr.Zero)
+                {
+                    SetAmmo(State.InfiniteAmmoValue);
+                }
+            }
+            catch
+            {
+                // Ignore errors in cheat loop
+            }
+        }
+
+        /// <summary>
+        /// Toggle god mode
+        /// </summary>
+        public void ToggleGodMode()
+        {
+            State.GodModeEnabled = !State.GodModeEnabled;
+            StatusChanged?.Invoke(this, $"God Mode: {(State.GodModeEnabled ? "ON" : "OFF")}");
+
+            if (State.GodModeEnabled && !_cheatLoopRunning)
+            {
+                StartCheatLoop();
+            }
+        }
+
+        /// <summary>
+        /// Toggle infinite ammo
+        /// </summary>
+        public void ToggleInfiniteAmmo()
+        {
+            State.InfiniteAmmoEnabled = !State.InfiniteAmmoEnabled;
+            StatusChanged?.Invoke(this, $"Infinite Ammo: {(State.InfiniteAmmoEnabled ? "ON" : "OFF")}");
+
+            if (State.InfiniteAmmoEnabled && !_cheatLoopRunning)
+            {
+                StartCheatLoop();
+            }
+        }
+
+        /// <summary>
+        /// Heal to full health (one-time)
+        /// </summary>
+        public bool HealToFull()
+        {
+            if (!IsAttached) return false;
+
+            var maxHealth = GetMaxHealth();
+            if (maxHealth.HasValue && maxHealth.Value > 0)
+            {
+                bool result = SetHealth(maxHealth.Value);
+                if (result) StatusChanged?.Invoke(this, $"Healed to {maxHealth.Value}");
+                return result;
+            }
+
+            // Fallback: set to 100
+            bool fallback = SetHealth(100f);
+            if (fallback) StatusChanged?.Invoke(this, "Healed to 100");
+            return fallback;
+        }
+
+        /// <summary>
+        /// Add armor plates
+        /// </summary>
+        public bool AddArmor(int plates = 5)
+        {
+            if (!IsAttached) return false;
+
+            var currentArmor = GetArmorPlates();
+            if (currentArmor.HasValue)
+            {
+                int newArmor = currentArmor.Value + plates;
+                bool result = SetArmorPlates(newArmor);
+                if (result) StatusChanged?.Invoke(this, $"Armor set to {newArmor}");
+                return result;
+            }
+
+            return SetArmorPlates(plates);
+        }
+
+        /// <summary>
+        /// Refill ammo (one-time)
+        /// </summary>
+        public bool RefillAmmo()
+        {
+            if (!IsAttached || _cachedPlayer.WeaponAddress == IntPtr.Zero) return false;
+
+            bool result = SetAmmo(999);
+            if (result) StatusChanged?.Invoke(this, "Ammo refilled");
+            return result;
+        }
 
         /// <summary>
         /// Set player health to maximum
         /// </summary>
         public bool SetMaxHealth()
         {
-            var maxHealth = ReadValue("MaxHealth");
-            if (maxHealth != null)
-            {
-                return WriteValue("Health", maxHealth);
-            }
-            return false;
+            return HealToFull();
         }
 
         /// <summary>
@@ -1336,27 +1743,24 @@ namespace CrabChampionsSaveEditor.Models
         /// </summary>
         public bool SetGodMode(bool enabled)
         {
-            if (enabled)
+            State.GodModeEnabled = enabled;
+            if (enabled && !_cheatLoopRunning)
             {
-                // Set health to very high value
-                return WriteValue("Health", 999999f) && WriteValue("MaxHealth", 999999f);
+                StartCheatLoop();
             }
-            else
-            {
-                // Reset to normal
-                return WriteValue("Health", 100f) && WriteValue("MaxHealth", 100f);
-            }
+            StatusChanged?.Invoke(this, $"God Mode: {(enabled ? "ON" : "OFF")}");
+            return true;
         }
 
         /// <summary>
-        /// Set currency values
+        /// Set currency values (requires finding currency addresses)
         /// </summary>
         public bool SetCurrency(int crystals, int keys)
         {
-            bool success = true;
-            if (crystals >= 0) success &= WriteValue("Crystals", crystals);
-            if (keys >= 0) success &= WriteValue("Keys", keys);
-            return success;
+            // This would require finding the PlayerState address and navigating to currency
+            // For now, log what we would need
+            StatusChanged?.Invoke(this, $"SetCurrency: Need PlayerState address. Crystals offset: 0x{SDKOffsets.AS_Crystals:X}");
+            return false;
         }
 
         /// <summary>
@@ -1364,10 +1768,12 @@ namespace CrabChampionsSaveEditor.Models
         /// </summary>
         public bool SetInfiniteAmmo(bool enabled)
         {
-            if (enabled)
+            State.InfiniteAmmoEnabled = enabled;
+            if (enabled && !_cheatLoopRunning)
             {
-                return WriteValue("CurrentAmmo", 999) && WriteValue("MaxAmmo", 999);
+                StartCheatLoop();
             }
+            StatusChanged?.Invoke(this, $"Infinite Ammo: {(enabled ? "ON" : "OFF")}");
             return true;
         }
 
@@ -1378,12 +1784,57 @@ namespace CrabChampionsSaveEditor.Models
         {
             var stats = new Dictionary<string, object?>();
 
-            foreach (var pointer in KnownPointers)
-            {
-                stats[pointer.Key] = ReadValue(pointer.Key);
-            }
+            stats["Health"] = GetHealth();
+            stats["MaxHealth"] = GetMaxHealth();
+            stats["ArmorPlates"] = GetArmorPlates();
+            stats["Ammo"] = GetAmmo();
+            stats["GodMode"] = State.GodModeEnabled;
+            stats["InfiniteAmmo"] = State.InfiniteAmmoEnabled;
+            stats["HealthComponentAddr"] = _cachedPlayer.HealthComponentAddress.ToInt64().ToString("X");
+            stats["WeaponAddr"] = _cachedPlayer.WeaponAddress.ToInt64().ToString("X");
 
             return stats;
+        }
+
+        /// <summary>
+        /// Print trainer status
+        /// </summary>
+        public string GetTrainerStatus()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== TRAINER STATUS ===\n");
+
+            sb.AppendLine($"Attached: {IsAttached}");
+            if (IsAttached)
+            {
+                sb.AppendLine($"Process: {GameProcess?.ProcessName} (PID: {GameProcess?.Id})");
+                sb.AppendLine($"Base: {BaseAddress:X}");
+            }
+            sb.AppendLine();
+
+            sb.AppendLine("=== CACHED ADDRESSES ===");
+            sb.AppendLine($"HealthComponent: {_cachedPlayer.HealthComponentAddress:X}");
+            sb.AppendLine($"Weapon: {_cachedPlayer.WeaponAddress:X}");
+            sb.AppendLine($"PlayerState: {_cachedPlayer.PlayerStateAddress:X}");
+            sb.AppendLine();
+
+            sb.AppendLine("=== CURRENT VALUES ===");
+            var health = GetHealth();
+            var maxHealth = GetMaxHealth();
+            var armor = GetArmorPlates();
+            var ammo = GetAmmo();
+
+            sb.AppendLine($"Health: {health?.ToString("F1") ?? "N/A"} / {maxHealth?.ToString("F1") ?? "N/A"}");
+            sb.AppendLine($"Armor: {armor?.ToString() ?? "N/A"}");
+            sb.AppendLine($"Ammo: {ammo?.ToString() ?? "N/A"}");
+            sb.AppendLine();
+
+            sb.AppendLine("=== CHEATS ===");
+            sb.AppendLine($"God Mode: {(State.GodModeEnabled ? "ON" : "OFF")}");
+            sb.AppendLine($"Infinite Ammo: {(State.InfiniteAmmoEnabled ? "ON" : "OFF")}");
+            sb.AppendLine($"Cheat Loop: {(_cheatLoopRunning ? "RUNNING" : "STOPPED")}");
+
+            return sb.ToString();
         }
 
         #endregion
@@ -2114,6 +2565,328 @@ namespace CrabChampionsSaveEditor.Models
                 ErrorOccurred?.Invoke(this, $"Invalid hex address: {hexAddress}");
             }
         }
+
+        #endregion
+
+        #region Perk/Mod/Relic Scanning and Injection
+
+        /// <summary>
+        /// Cached Perk/Mod DA information
+        /// </summary>
+        public class PickupDAInfo
+        {
+            public string ItemId { get; set; } = "";
+            public string ItemType { get; set; } = ""; // perk, weaponmod, abilitymod, etc.
+            public string AssetPath { get; set; } = "";
+            public IntPtr StringAddress { get; set; }
+            public IntPtr DAPointer { get; set; }
+        }
+
+        // Cache of found item DAs
+        private readonly Dictionary<string, PickupDAInfo> _pickupDACache = new();
+
+        /// <summary>
+        /// All known perk IDs from the game
+        /// </summary>
+        public static readonly string[] KnownPerkIds =
+        {
+            // Common
+            "Mango", "Banana", "GlassCannon", "Juggernaut", "SpeedDemon",
+            "Regenerator", "Bulletproof", "Sharpshooter", "HeavyHitter",
+            "Firestarter", "IceCold", "HighVoltage", "Toxic", "PotentMagic",
+            "Fortitude", "Vitality", "Endurance", "Stamina",
+            // Epic
+            "MegaCrit", "Assassin", "Survivor", "Collector", "DoubleVision",
+            "ExplodingEnemies", "HealthIsPower", "MoneyIsPower", "SpeedIsPower",
+            // Legendary
+            "DaggerDash", "IceDash", "LightningDash", "Powerslide",
+            "FlammableEnemies", "FreezingEnemies", "PoisonousEnemies"
+        };
+
+        /// <summary>
+        /// All known ability IDs
+        /// </summary>
+        public static readonly string[] KnownAbilityIds =
+        {
+            "Grenade", "Shuriken", "HomingMissiles", "ArcaneBlast", "IceSpike",
+            "Fireball", "LightningBolt", "PoisonCloud", "Turret", "Mortar",
+            "Shield", "Dash", "Teleport", "Slam", "Hook"
+        };
+
+        /// <summary>
+        /// All known melee weapon IDs
+        /// </summary>
+        public static readonly string[] KnownMeleeIds =
+        {
+            "Sword", "Hammer", "Daggers", "Spear", "Axe", "Scythe", "Fists"
+        };
+
+        /// <summary>
+        /// Scan for all perk DAs in memory
+        /// </summary>
+        public Dictionary<string, PickupDAInfo> ScanForPerkDAs()
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return new Dictionary<string, PickupDAInfo>();
+            }
+
+            StatusChanged?.Invoke(this, "Scanning for Perk DAs...");
+            var foundPerks = new Dictionary<string, PickupDAInfo>();
+
+            foreach (var perkId in KnownPerkIds)
+            {
+                string assetPath = $"/Game/Blueprint/Pickup/Perk/DA_Perk_{perkId}";
+                var addresses = ScanForString(assetPath);
+
+                if (addresses.Count > 0)
+                {
+                    var info = new PickupDAInfo
+                    {
+                        ItemId = perkId,
+                        ItemType = "perk",
+                        AssetPath = assetPath,
+                        StringAddress = addresses[0],
+                        DAPointer = FindDAPointerFromString(addresses[0], assetPath)
+                    };
+
+                    string key = $"perk_{perkId}";
+                    _pickupDACache[key] = info;
+                    foundPerks[perkId] = info;
+                    StatusChanged?.Invoke(this, $"Found Perk {perkId}: {addresses[0]:X}");
+                }
+            }
+
+            StatusChanged?.Invoke(this, $"Scan complete. Found {foundPerks.Count} perks.");
+            return foundPerks;
+        }
+
+        /// <summary>
+        /// Scan for weapon mod DAs in memory
+        /// </summary>
+        public Dictionary<string, PickupDAInfo> ScanForWeaponModDAs()
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return new Dictionary<string, PickupDAInfo>();
+            }
+
+            StatusChanged?.Invoke(this, "Scanning for Weapon Mod DAs...");
+            var foundMods = new Dictionary<string, PickupDAInfo>();
+
+            // Use the ECrabWeaponModType enum values we have
+            foreach (var modType in ECrabWeaponModType.AllValues.Skip(1)) // Skip "None"
+            {
+                // Extract the mod name from "ECrabWeaponModType::DoubleShot"
+                string modName = modType.Split("::").Last();
+                string assetPath = $"/Game/Blueprint/Pickup/WeaponMod/DA_WeaponMod_{modName}";
+                var addresses = ScanForString(assetPath);
+
+                if (addresses.Count > 0)
+                {
+                    var info = new PickupDAInfo
+                    {
+                        ItemId = modName,
+                        ItemType = "weaponmod",
+                        AssetPath = assetPath,
+                        StringAddress = addresses[0],
+                        DAPointer = FindDAPointerFromString(addresses[0], assetPath)
+                    };
+
+                    string key = $"weaponmod_{modName}";
+                    _pickupDACache[key] = info;
+                    foundMods[modName] = info;
+                }
+            }
+
+            StatusChanged?.Invoke(this, $"Scan complete. Found {foundMods.Count} weapon mods.");
+            return foundMods;
+        }
+
+        /// <summary>
+        /// Scan for a specific pickup DA
+        /// </summary>
+        public PickupDAInfo? ScanForPickupDA(string itemType, string itemId)
+        {
+            if (!IsAttached) return null;
+
+            string assetPath = itemType.ToLower() switch
+            {
+                "perk" => $"/Game/Blueprint/Pickup/Perk/DA_Perk_{itemId}",
+                "weaponmod" => $"/Game/Blueprint/Pickup/WeaponMod/DA_WeaponMod_{itemId}",
+                "abilitymod" => $"/Game/Blueprint/Pickup/AbilityMod/DA_AbilityMod_{itemId}",
+                "meleemod" => $"/Game/Blueprint/Pickup/MeleeMod/DA_MeleeMod_{itemId}",
+                "relic" => $"/Game/Blueprint/Pickup/Relic/DA_Relic_{itemId}",
+                "ability" => $"/Game/Blueprint/Ability/DA_Ability_{itemId}",
+                "melee" => $"/Game/Blueprint/Melee/DA_Melee_{itemId}",
+                _ => $"/Game/Blueprint/Pickup/{itemType}/DA_{itemType}_{itemId}"
+            };
+
+            var addresses = ScanForString(assetPath);
+            if (addresses.Count == 0)
+            {
+                StatusChanged?.Invoke(this, $"{itemType} {itemId} not found in memory");
+                return null;
+            }
+
+            var info = new PickupDAInfo
+            {
+                ItemId = itemId,
+                ItemType = itemType,
+                AssetPath = assetPath,
+                StringAddress = addresses[0],
+                DAPointer = FindDAPointerFromString(addresses[0], assetPath)
+            };
+
+            string key = $"{itemType}_{itemId}";
+            _pickupDACache[key] = info;
+            StatusChanged?.Invoke(this, $"Found {itemType} {itemId}: {addresses[0]:X}");
+
+            return info;
+        }
+
+        /// <summary>
+        /// Get cached pickup DA or scan for it
+        /// </summary>
+        public PickupDAInfo? GetPickupDA(string itemType, string itemId)
+        {
+            string key = $"{itemType}_{itemId}";
+            if (_pickupDACache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+            return ScanForPickupDA(itemType, itemId);
+        }
+
+        /// <summary>
+        /// Generate a report of all scannable items
+        /// </summary>
+        public string GeneratePickupReport()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PICKUP SCAN REPORT ===\n");
+
+            if (!IsAttached)
+            {
+                sb.AppendLine("Not attached to game.");
+                return sb.ToString();
+            }
+
+            sb.AppendLine($"Base: {BaseAddress:X}");
+            sb.AppendLine($"PlayerController: {CapturedPlayerController:X}");
+            sb.AppendLine();
+
+            // Scan perks
+            sb.AppendLine("=== PERKS ===");
+            var perks = ScanForPerkDAs();
+            foreach (var kvp in perks.OrderBy(k => k.Key))
+            {
+                sb.AppendLine($"  {kvp.Key}: DA@{kvp.Value.DAPointer:X}");
+            }
+            sb.AppendLine();
+
+            // Show cached items
+            sb.AppendLine("=== ALL CACHED ITEMS ===");
+            foreach (var kvp in _pickupDACache.OrderBy(k => k.Key))
+            {
+                sb.AppendLine($"  [{kvp.Value.ItemType}] {kvp.Value.ItemId}: {kvp.Value.DAPointer:X}");
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Try to give a perk using ServerEquipInventory or direct TArray manipulation
+        /// NOTE: This is experimental and may require PlayerController address
+        /// </summary>
+        public bool TryGivePerk(string perkId)
+        {
+            if (!IsAttached)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached to game");
+                return false;
+            }
+
+            var perkDA = GetPickupDA("perk", perkId);
+            if (perkDA == null || perkDA.DAPointer == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, $"Could not find perk DA for {perkId}");
+                return false;
+            }
+
+            StatusChanged?.Invoke(this, $"Found {perkId} DA at {perkDA.DAPointer:X}");
+
+            // If we have PlayerController, try using ServerEquipInventory
+            if (CapturedPlayerController != IntPtr.Zero)
+            {
+                StatusChanged?.Invoke(this, "Attempting to call ServerEquipInventory...");
+
+                // ServerEquipInventory takes (this, pickupDA) - try with perk DA
+                IntPtr funcAddress = new IntPtr(KnownFunctions.ServerEquipInventory);
+                byte[] shellcode = BuildCallShellcode(CapturedPlayerController, perkDA.DAPointer, funcAddress);
+
+                bool result = ExecuteRemoteShellcode(shellcode);
+                if (result)
+                {
+                    StatusChanged?.Invoke(this, $"ServerEquipInventory called for {perkId}");
+                }
+                return result;
+            }
+            else
+            {
+                StatusChanged?.Invoke(this, "PlayerController not set. Set it with SetPlayerController(address)");
+                StatusChanged?.Invoke(this, $"Perk DA address for manual use: {perkDA.DAPointer:X}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Try to give a weapon mod
+        /// </summary>
+        public bool TryGiveWeaponMod(string modId)
+        {
+            if (!IsAttached || CapturedPlayerController == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, "Not attached or PlayerController not set");
+                return false;
+            }
+
+            var modDA = GetPickupDA("weaponmod", modId);
+            if (modDA == null || modDA.DAPointer == IntPtr.Zero)
+            {
+                ErrorOccurred?.Invoke(this, $"Could not find weapon mod DA for {modId}");
+                return false;
+            }
+
+            StatusChanged?.Invoke(this, $"Attempting to give weapon mod {modId}...");
+
+            IntPtr funcAddress = new IntPtr(KnownFunctions.ServerEquipInventory);
+            byte[] shellcode = BuildCallShellcode(CapturedPlayerController, modDA.DAPointer, funcAddress);
+
+            return ExecuteRemoteShellcode(shellcode);
+        }
+
+        /// <summary>
+        /// List all available perks that can be scanned
+        /// </summary>
+        public string[] GetAvailablePerks() => KnownPerkIds;
+
+        /// <summary>
+        /// List all available weapons that can be scanned
+        /// </summary>
+        public string[] GetAvailableWeapons() => KnownWeaponIds;
+
+        /// <summary>
+        /// List all available abilities that can be scanned
+        /// </summary>
+        public string[] GetAvailableAbilities() => KnownAbilityIds;
+
+        /// <summary>
+        /// List all available melee weapons that can be scanned
+        /// </summary>
+        public string[] GetAvailableMelee() => KnownMeleeIds;
 
         #endregion
 
