@@ -156,7 +156,26 @@
                     <Button Content="💾 Save" Style="{StaticResource SecondaryButton}"
                             Command="{Binding SaveFileCommand}" IsEnabled="{Binding HasFile}" Margin="0,0,12,0"/>
                     <Button Content="📋 Backup" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding CreateBackupCommand}" IsEnabled="{Binding HasFile}"/>
+                            Command="{Binding CreateBackupCommand}" IsEnabled="{Binding HasFile}" Margin="0,0,12,0"/>
+                    <Button Command="{Binding OpenTrainerCommand}" Cursor="Hand" Padding="16,10">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#10B981" Offset="0"/>
+                                            <GradientStop Color="#059669" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="BorderBrush" Value="#34D399"/>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚡" Margin="0,0,6,0"/>
+                            <TextBlock Text="Trainer"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 
-namespace CrabChampionsSaveEditor.Models
+namespace UnrealSavEditor.Models
 {
     /// <summary>
     /// Memory trainer for live game modification of Crab Champions.

@@ -1360,6 +1360,13 @@ namespace UnrealSavEditor.ViewModels
             }
             return $"{size:0.##} {sizes[order]}";
         }
+
+        [RelayCommand]
+        private void OpenTrainer()
+        {
+            var trainerWindow = new Views.TrainerWindow();
+            trainerWindow.Show();
+        }
     }
 
     public class RecentFileViewModel

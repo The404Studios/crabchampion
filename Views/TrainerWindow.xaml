@@ -1,0 +1,357 @@
+<Window x:Class="UnrealSavEditor.Views.TrainerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UnrealSavEditor.ViewModels"
+        Title="🦀 Crab Champions Trainer"
+        Height="700" Width="500"
+        MinHeight="500" MinWidth="400"
+        WindowStartupLocation="CenterScreen"
+        Background="#0F172A"
+        Topmost="True">
+
+    <Window.DataContext>
+        <vm:TrainerViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style x:Key="HeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#F97316"/>
+        </Style>
+
+        <Style x:Key="SubText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style x:Key="ValueText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#22D3EE"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="CheatButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#10B981"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#34D399"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#334155"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="AttachButton" TargetType="Button">
+            <Setter Property="Background" Value="#F97316"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EA580C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <Style x:Key="AddressTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#22D3EE"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+            <StackPanel>
+
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <TextBlock Text="🦀" FontSize="32" Margin="0,0,12,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Crab Champions Trainer" Style="{StaticResource HeaderText}"/>
+                        <TextBlock Text="Memory-based cheats for live gameplay" Style="{StaticResource SubText}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Connection Status -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="12" Height="12" Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#EF4444"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAttached}" Value="True">
+                                                <Setter Property="Fill" Value="#10B981"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding ConnectionStatus}" Foreground="#F8FAFC" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <Button Style="{StaticResource AttachButton}" Command="{Binding AttachCommand}"
+                                Content="{Binding AttachButtonText}" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Live Stats -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="📊 Live Stats" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
+                                <TextBlock Text="Health" Style="{StaticResource SubText}"/>
+                                <TextBlock Text="{Binding HealthDisplay}" Style="{StaticResource ValueText}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
+                                <TextBlock Text="Armor" Style="{StaticResource SubText}"/>
+                                <TextBlock Text="{Binding ArmorDisplay}" Style="{StaticResource ValueText}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,0">
+                                <TextBlock Text="Ammo" Style="{StaticResource SubText}"/>
+                                <TextBlock Text="{Binding AmmoDisplay}" Style="{StaticResource ValueText}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,0">
+                                <TextBlock Text="Cheat Loop" Style="{StaticResource SubText}"/>
+                                <TextBlock Text="{Binding CheatLoopStatus}" Style="{StaticResource ValueText}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Main Cheats -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="⚡ Cheats (Toggle)" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <UniformGrid Columns="2" Rows="2">
+                            <ToggleButton Style="{StaticResource CheatButton}" IsChecked="{Binding GodModeEnabled}"
+                                          Margin="0,0,6,6" IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="❤️" Margin="0,0,8,0"/>
+                                    <TextBlock Text="God Mode"/>
+                                </StackPanel>
+                            </ToggleButton>
+
+                            <ToggleButton Style="{StaticResource CheatButton}" IsChecked="{Binding InfiniteAmmoEnabled}"
+                                          Margin="6,0,0,6" IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🔫" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Infinite Ammo"/>
+                                </StackPanel>
+                            </ToggleButton>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Actions -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="🎯 Quick Actions" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <WrapPanel>
+                            <Button Style="{StaticResource ActionButton}" Command="{Binding HealCommand}"
+                                    Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="💚" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Heal"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource ActionButton}" Command="{Binding AddArmorCommand}"
+                                    Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🛡️" Margin="0,0,6,0"/>
+                                    <TextBlock Text="+5 Armor"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource ActionButton}" Command="{Binding RefillAmmoCommand}"
+                                    Margin="0,0,8,8" IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🔄" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Refill Ammo"/>
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Address Configuration -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="🔧 Address Configuration" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Set addresses from Cheat Engine (required for cheats to work)"
+                                   Style="{StaticResource SubText}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Health Component Address:" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Style="{StaticResource AddressTextBox}"
+                                         Text="{Binding HealthComponentAddress, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Grid.Column="1" Content="Set" Style="{StaticResource ActionButton}"
+                                        Command="{Binding SetHealthAddressCommand}" Margin="8,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Weapon Address (RBX from ammo write):" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Style="{StaticResource AddressTextBox}"
+                                         Text="{Binding WeaponAddress, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Grid.Column="1" Content="Set" Style="{StaticResource ActionButton}"
+                                        Command="{Binding SetWeaponAddressCommand}" Margin="8,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock Text="PlayerController (for item injection):" Style="{StaticResource SubText}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Style="{StaticResource AddressTextBox}"
+                                         Text="{Binding PlayerControllerAddress, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Grid.Column="1" Content="Set" Style="{StaticResource ActionButton}"
+                                        Command="{Binding SetPlayerControllerCommand}" Margin="8,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- SDK Info -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="📋 SDK Status" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,8"/>
+
+                        <Button Style="{StaticResource ActionButton}" Command="{Binding VerifySDKCommand}"
+                                Margin="0,0,0,8" IsEnabled="{Binding IsAttached}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔍" Margin="0,0,6,0"/>
+                                <TextBlock Text="Verify SDK Offsets"/>
+                            </StackPanel>
+                        </Button>
+
+                        <TextBlock Text="{Binding SDKStatus}" Style="{StaticResource SubText}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Log -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="📜 Log" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <Border Background="#0F172A" CornerRadius="6" Padding="8" MaxHeight="150">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding LogText}" Foreground="#94A3B8" FontFamily="Consolas"
+                                           FontSize="11" TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
