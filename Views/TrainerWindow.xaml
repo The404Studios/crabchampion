@@ -270,6 +270,44 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Perk Spawning -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="🎁 Spawn Perks" Foreground="#F8FAFC" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Select a perk and click Spawn (requires PlayerController address)"
+                                   Style="{StaticResource SubText}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding AvailablePerks}"
+                                      SelectedItem="{Binding SelectedPerk}"
+                                      Background="#0F172A"
+                                      Foreground="#22D3EE"
+                                      BorderBrush="#334155"
+                                      BorderThickness="1"
+                                      Padding="8,6"
+                                      FontFamily="Consolas"
+                                      IsEnabled="{Binding IsAttached}"/>
+
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource ActionButton}"
+                                    Command="{Binding SpawnPerkCommand}"
+                                    Margin="8,0,0,0"
+                                    IsEnabled="{Binding IsAttached}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✨" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Spawn"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- Address Configuration -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

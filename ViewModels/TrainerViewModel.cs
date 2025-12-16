@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -13,9 +16,11 @@ namespace UnrealSavEditor.ViewModels
         private readonly MemoryTrainer _trainer;
         private readonly DispatcherTimer _updateTimer;
         private readonly StringBuilder _logBuilder = new();
+        private readonly Dispatcher _dispatcher;
 
         public TrainerViewModel()
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _trainer = new MemoryTrainer();
             _trainer.StatusChanged += OnTrainerStatus;
             _trainer.ErrorOccurred += OnTrainerError;
@@ -29,7 +34,7 @@ namespace UnrealSavEditor.ViewModels
             _updateTimer.Start();
 
             // Initialize commands
-            AttachCommand = new RelayCommand(ToggleAttach);
+            AttachCommand = new RelayCommand(async () => await ToggleAttachAsync(), () => !IsAttaching);
             HealCommand = new RelayCommand(() => _trainer.HealToFull(), () => IsAttached);
             AddArmorCommand = new RelayCommand(() => _trainer.AddArmor(5), () => IsAttached);
             RefillAmmoCommand = new RelayCommand(() => _trainer.RefillAmmo(), () => IsAttached);
@@ -37,6 +42,12 @@ namespace UnrealSavEditor.ViewModels
             SetWeaponAddressCommand = new RelayCommand(SetWeaponAddress);
             SetPlayerControllerCommand = new RelayCommand(SetPlayerController);
             VerifySDKCommand = new RelayCommand(VerifySDK, () => IsAttached);
+            SpawnPerkCommand = new RelayCommand(SpawnSelectedPerk, () => IsAttached && SelectedPerk != null);
+
+            // Initialize perk list
+            AvailablePerks = _trainer.GetAvailablePerks().ToList();
+            if (AvailablePerks.Count > 0)
+                SelectedPerk = AvailablePerks[0];
 
             Log("Trainer initialized. Click 'Attach to Game' to begin.");
         }
@@ -50,8 +61,25 @@ namespace UnrealSavEditor.ViewModels
             set { _isAttached = value; OnPropertyChanged(); OnPropertyChanged(nameof(ConnectionStatus)); OnPropertyChanged(nameof(AttachButtonText)); }
         }
 
+        private bool _isAttaching;
+        public bool IsAttaching
+        {
+            get => _isAttaching;
+            set { _isAttaching = value; OnPropertyChanged(); OnPropertyChanged(nameof(AttachButtonText)); }
+        }
+
         public string ConnectionStatus => IsAttached ? "Connected to Crab Champions" : "Not Connected";
-        public string AttachButtonText => IsAttached ? "Detach from Game" : "Attach to Game";
+        public string AttachButtonText => IsAttaching ? "Attaching..." : (IsAttached ? "Detach from Game" : "Attach to Game");
+
+        // Perk spawning
+        public List<string> AvailablePerks { get; }
+
+        private string? _selectedPerk;
+        public string? SelectedPerk
+        {
+            get => _selectedPerk;
+            set { _selectedPerk = value; OnPropertyChanged(); }
+        }
 
         private bool _godModeEnabled;
         public bool GodModeEnabled
@@ -160,12 +188,13 @@ namespace UnrealSavEditor.ViewModels
         public ICommand SetWeaponAddressCommand { get; }
         public ICommand SetPlayerControllerCommand { get; }
         public ICommand VerifySDKCommand { get; }
+        public ICommand SpawnPerkCommand { get; }
 
         #endregion
 
         #region Methods
 
-        private void ToggleAttach()
+        private async Task ToggleAttachAsync()
         {
             if (IsAttached)
             {
@@ -175,24 +204,78 @@ namespace UnrealSavEditor.ViewModels
             }
             else
             {
-                bool success = _trainer.AttachToGame();
-                IsAttached = success;
+                IsAttaching = true;
+                Log("Attaching to game...");
 
+                try
+                {
+                    // Run attach on background thread to prevent UI freeze
+                    var result = await Task.Run(() =>
+                    {
+                        bool success = _trainer.AttachToGame();
+                        if (!success) return (success: false, baseAddr: IntPtr.Zero, playerValid: false);
+
+                        // Try to find player (expensive operation)
+                        var player = _trainer.FindPlayer();
+                        return (success: true, baseAddr: _trainer.BaseAddress, playerValid: player.IsValid);
+                    });
+
+                    IsAttached = result.success;
+
+                    if (result.success)
+                    {
+                        Log($"Attached to game at base {result.baseAddr:X}");
+                        if (result.playerValid)
+                        {
+                            Log("Auto-found player state");
+                        }
+                        else
+                        {
+                            Log("Could not auto-find player. Set addresses manually from Cheat Engine.");
+                        }
+                    }
+                    else
+                    {
+                        Log("Failed to attach - is Crab Champions running?");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"Error during attach: {ex.Message}");
+                    IsAttached = false;
+                }
+                finally
+                {
+                    IsAttaching = false;
+                }
+            }
+        }
+
+        private void SpawnSelectedPerk()
+        {
+            if (string.IsNullOrEmpty(SelectedPerk))
+            {
+                Log("No perk selected");
+                return;
+            }
+
+            Log($"Attempting to spawn perk: {SelectedPerk}");
+
+            try
+            {
+                bool success = _trainer.TryGivePerk(SelectedPerk);
                 if (success)
                 {
-                    Log($"Attached to game at base {_trainer.BaseAddress:X}");
-
-                    // Try to auto-find player
-                    var player = _trainer.FindPlayer();
-                    if (player.IsValid)
-                    {
-                        Log("Auto-found player state");
-                    }
+                    Log($"Successfully spawned {SelectedPerk}!");
                 }
                 else
                 {
-                    Log("Failed to attach - is Crab Champions running?");
+                    Log($"Failed to spawn {SelectedPerk}. Make sure PlayerController is set.");
                 }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error spawning perk: {ex.Message}");
             }
         }
 
