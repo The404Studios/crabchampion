@@ -578,6 +578,85 @@ namespace CrabChampionsSaveEditor.Models
         }
 
         /// <summary>
+        /// SDK Global Offsets (from Landan420/CrabChampionsSDKBase)
+        /// These are offsets from the module base address
+        /// </summary>
+        public static class SDKOffsets
+        {
+            // Core UE4 globals (from Offsets.h)
+            public const long GObjects = 0x042AB770;       // Global UObject array
+            public const long GNames = 0x0426F480;         // Global FName pool
+            public const long GWorld = 0x043EAF20;         // UWorld pointer
+            public const long ProcessEvent = 0x010C5F00;   // UObject::ProcessEvent
+            public const long AppendString = 0x00ECE1A0;   // FName::AppendString
+            public const long ProcessEventIdx = 0x44;      // ProcessEvent vtable index
+
+            // UCrabHC (Health Component) offsets
+            public const long HC_OwningC = 0x00B0;             // ACrabC* owner
+            public const long HC_BaseArmorPlates = 0x00B8;     // int32
+            public const long HC_BaseMaxHealth = 0x00C0;       // float
+            public const long HC_ShouldRegenerateHealth = 0x00D0; // bool
+            public const long HC_HealthInfo = 0x00FC;          // FCrabHealthInfo struct
+
+            // FCrabHealthInfo struct offsets (relative to HealthInfo)
+            public const long HI_CurrentArmorPlates = 0x0000;     // int32
+            public const long HI_CurrentArmorPlateHealth = 0x0004; // float
+            public const long HI_PreviousArmorPlateHealth = 0x0008; // float
+            public const long HI_CurrentHealth = 0x000C;          // float
+            public const long HI_CurrentMaxHealth = 0x0010;       // float
+            public const long HI_PreviousHealth = 0x0014;         // float
+            public const long HI_PreviousMaxHealth = 0x0018;      // float
+
+            // UCrabPickupDA (Base Pickup Data Asset) offsets
+            public const long PDA_RequiresUnlock = 0x0030;   // bool
+            public const long PDA_Name = 0x0038;             // FString
+            public const long PDA_Description = 0x0048;      // FString
+            public const long PDA_Icon = 0x0058;             // UTexture2D*
+            public const long PDA_PickupType = 0x0060;       // ECrabPickupType (uint8)
+            public const long PDA_LootPool = 0x0061;         // ECrabLootPool (uint8)
+            public const long PDA_Rarity = 0x0062;           // ECrabRarity (uint8)
+
+            // UCrabInventoryDA offsets (extends UCrabPickupDA)
+            public const long IDA_EnhanceableType = 0x00B0;  // ECrabEnhanceableType
+            public const long IDA_LevelDescription = 0x00B8; // FString
+            public const long IDA_BaseBuff = 0x00C8;         // float
+            public const long IDA_BaseDebuff = 0x00D0;       // float
+            public const long IDA_Cooldown = 0x00D6;         // uint8
+
+            // FCrabAutoSave struct offsets (full save state)
+            public const long AS_CurrentTime = 0x0000;       // int32
+            public const long AS_Difficulty = 0x0004;        // ECrabDifficulty
+            public const long AS_HealthInfo = 0x0068;        // FCrabHealthInfo
+            public const long AS_BaseMaxHealth = 0x0084;     // float
+            public const long AS_MaxHealthMultiplier = 0x0088; // float
+            public const long AS_DamageMultiplier = 0x008C;  // float
+            public const long AS_ScaleMultiplier = 0x0090;   // float
+            public const long AS_WeaponDA = 0x0098;          // UCrabWeaponDA*
+            public const long AS_AbilityDA = 0x00A0;         // UCrabAbilityDA*
+            public const long AS_MeleeDA = 0x00A8;           // UCrabMeleeDA*
+            public const long AS_NumWeaponModSlots = 0x00B0; // uint8
+            public const long AS_WeaponMods = 0x00B8;        // TArray<FCrabWeaponMod>
+            public const long AS_NumAbilityModSlots = 0x00C8; // uint8
+            public const long AS_AbilityMods = 0x00D0;       // TArray<FCrabAbilityMod>
+            public const long AS_NumMeleeModSlots = 0x00E0;  // uint8
+            public const long AS_MeleeMods = 0x00E8;         // TArray<FCrabMeleeMod>
+            public const long AS_NumPerkSlots = 0x00F8;      // uint8
+            public const long AS_Perks = 0x0100;             // TArray<FCrabPerk>
+            public const long AS_Relics = 0x0110;            // TArray<FCrabRelic>
+            public const long AS_Crystals = 0x0130;          // uint32
+
+            // ACrabGS (Game State) offsets
+            public const long GS_LevelManager = 0x0270;      // ACrabLM*
+            public const long GS_MatchState = 0x0278;        // ECrabMatchState (replicated)
+            public const long GS_IsTimePaused = 0x0298;      // bool (replicated)
+            public const long GS_CurrentTime = 0x029C;       // int32 (replicated)
+            public const long GS_Difficulty = 0x02A4;        // ECrabDifficulty (replicated)
+
+            // Weapon object offsets (from RE - ammo at +0x2F0)
+            public const long Weapon_Ammo = 0x02F0;          // int32 - current ammo count
+        }
+
+        /// <summary>
         /// Known function addresses from RE (version-specific)
         /// These are example addresses - actual values depend on game version
         /// </summary>
@@ -677,74 +756,129 @@ namespace CrabChampionsSaveEditor.Models
         }
 
         /// <summary>
-        /// Known pointer paths - these are version-specific examples
-        /// Use FindPointerPath() to discover correct paths for current version
+        /// Known pointer paths - based on SDK from Landan420/CrabChampionsSDKBase
+        /// GWorld offset: 0x043EAF20 (from SDK Offsets.h)
+        ///
+        /// Pointer chain: Base + GWorld -> UWorld -> GameState/PlayerController -> Properties
         /// </summary>
         public static readonly Dictionary<string, PointerPath> KnownPointers = new()
         {
-            // Player stats (example paths - may need updating)
+            // ============================================
+            // GWorld-based paths (SDK: GWorld = 0x043EAF20)
+            // UWorld -> OwningGameInstance -> LocalPlayers[0] -> PlayerController -> ...
+            // ============================================
+
+            // Player stats via GWorld chain
+            // Path: GWorld -> GameState -> PlayerArray[0] -> PlayerState -> HealthComponent -> HealthInfo
             ["Health"] = new PointerPath
             {
                 Name = "Health",
-                Description = "Player current health (float)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x348 },
+                Description = "Player current health via GWorld (float)",
+                // GWorld -> UWorld+0x140 (GameState) -> +0x... path needs runtime verification
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, 0x2A8, SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentHealth },
                 IsFloat = true
             },
             ["MaxHealth"] = new PointerPath
             {
                 Name = "MaxHealth",
-                Description = "Player max health (float)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x34C },
+                Description = "Player max health via GWorld (float)",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, 0x2A8, SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentMaxHealth },
                 IsFloat = true
             },
-            ["Armor"] = new PointerPath
+            ["ArmorPlates"] = new PointerPath
             {
-                Name = "Armor",
-                Description = "Player armor value (float)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x350 },
-                IsFloat = true
+                Name = "ArmorPlates",
+                Description = "Player armor plates count (int32)",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, 0x2A8, SDKOffsets.HC_HealthInfo + SDKOffsets.HI_CurrentArmorPlates }
             },
 
-            // Currency
-            ["Crystals"] = new PointerPath
+            // ============================================
+            // Direct GWorld pointer for basic access
+            // ============================================
+            ["GWorld"] = new PointerPath
             {
-                Name = "Crystals",
-                Description = "Current crystal count (int32)",
+                Name = "GWorld",
+                Description = "UWorld pointer (SDK: 0x043EAF20)",
+                Offsets = new long[] { SDKOffsets.GWorld },
+                IsPointer = true
+            },
+            ["GObjects"] = new PointerPath
+            {
+                Name = "GObjects",
+                Description = "Global UObject array (SDK: 0x042AB770)",
+                Offsets = new long[] { SDKOffsets.GObjects },
+                IsPointer = true
+            },
+            ["GNames"] = new PointerPath
+            {
+                Name = "GNames",
+                Description = "Global FName pool (SDK: 0x0426F480)",
+                Offsets = new long[] { SDKOffsets.GNames },
+                IsPointer = true
+            },
+
+            // ============================================
+            // Weapon-related (verified from RE: ammo at +0x2F0)
+            // Need weapon object pointer first
+            // ============================================
+            ["WeaponAmmo"] = new PointerPath
+            {
+                Name = "WeaponAmmo",
+                Description = "Current weapon ammo (int32) - offset 0x2F0 from weapon object",
+                // This requires the weapon object pointer to be found first
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, 0x2A8, 0x98, SDKOffsets.Weapon_Ammo }
+            },
+
+            // ============================================
+            // Game State (ACrabGS) properties
+            // ============================================
+            ["GameState"] = new PointerPath
+            {
+                Name = "GameState",
+                Description = "ACrabGS pointer via GWorld",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140 },
+                IsPointer = true
+            },
+            ["MatchState"] = new PointerPath
+            {
+                Name = "MatchState",
+                Description = "Current match state (ECrabMatchState)",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, SDKOffsets.GS_MatchState }
+            },
+            ["GameTime"] = new PointerPath
+            {
+                Name = "GameTime",
+                Description = "Current game time in seconds (int32)",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, SDKOffsets.GS_CurrentTime }
+            },
+            ["Difficulty"] = new PointerPath
+            {
+                Name = "Difficulty",
+                Description = "Current difficulty (ECrabDifficulty)",
+                Offsets = new long[] { SDKOffsets.GWorld, 0x140, SDKOffsets.GS_Difficulty }
+            },
+
+            // ============================================
+            // Legacy paths (may need verification for V2347)
+            // ============================================
+            ["Health_Legacy"] = new PointerPath
+            {
+                Name = "Health_Legacy",
+                Description = "Player current health - legacy path",
+                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x348 },
+                IsFloat = true
+            },
+            ["Crystals_Legacy"] = new PointerPath
+            {
+                Name = "Crystals_Legacy",
+                Description = "Current crystal count - legacy path",
                 Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x2F0 }
             },
-            ["Keys"] = new PointerPath
+            ["Keys_Legacy"] = new PointerPath
             {
-                Name = "Keys",
-                Description = "Current key count (int32)",
+                Name = "Keys_Legacy",
+                Description = "Current key count - legacy path",
                 Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x2F4 }
-            },
-
-            // Weapon
-            ["CurrentAmmo"] = new PointerPath
-            {
-                Name = "CurrentAmmo",
-                Description = "Current weapon ammo (int32)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x400 }
-            },
-            ["MaxAmmo"] = new PointerPath
-            {
-                Name = "MaxAmmo",
-                Description = "Max weapon ammo (int32)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x404 }
-            },
-
-            // Level/Progress
-            ["CurrentIsland"] = new PointerPath
-            {
-                Name = "CurrentIsland",
-                Description = "Current island number (int32)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x280 }
-            },
-            ["Wave"] = new PointerPath
-            {
-                Name = "Wave",
-                Description = "Current wave number (int32)",
-                Offsets = new long[] { 0x04B89D68, 0x30, 0x250, 0x284 }
             },
         };
 
@@ -1028,6 +1162,156 @@ namespace CrabChampionsSaveEditor.Models
         {
             if (!IsAttached || GameProcess?.MainModule == null) return IntPtr.Zero;
             return AOBScan(patternString, BaseAddress, GameProcess.MainModule.ModuleMemorySize);
+        }
+
+        #endregion
+
+        #region SDK Global Access
+
+        /// <summary>
+        /// Read the GWorld pointer from the game
+        /// SDK offset: 0x043EAF20
+        /// </summary>
+        public IntPtr ReadGWorld()
+        {
+            if (!IsAttached) return IntPtr.Zero;
+
+            IntPtr gworldAddr = IntPtr.Add(BaseAddress, (int)SDKOffsets.GWorld);
+            long value = ReadInt64(gworldAddr);
+            return new IntPtr(value);
+        }
+
+        /// <summary>
+        /// Read the GObjects pointer from the game
+        /// SDK offset: 0x042AB770
+        /// </summary>
+        public IntPtr ReadGObjects()
+        {
+            if (!IsAttached) return IntPtr.Zero;
+
+            IntPtr gobjectsAddr = IntPtr.Add(BaseAddress, (int)SDKOffsets.GObjects);
+            long value = ReadInt64(gobjectsAddr);
+            return new IntPtr(value);
+        }
+
+        /// <summary>
+        /// Read the GNames pointer from the game
+        /// SDK offset: 0x0426F480
+        /// </summary>
+        public IntPtr ReadGNames()
+        {
+            if (!IsAttached) return IntPtr.Zero;
+
+            IntPtr gnamesAddr = IntPtr.Add(BaseAddress, (int)SDKOffsets.GNames);
+            long value = ReadInt64(gnamesAddr);
+            return new IntPtr(value);
+        }
+
+        /// <summary>
+        /// Verify that SDK offsets are valid for the current game version
+        /// </summary>
+        public Dictionary<string, (IntPtr Address, bool Valid)> VerifySDKOffsets()
+        {
+            var results = new Dictionary<string, (IntPtr, bool)>();
+
+            if (!IsAttached)
+            {
+                StatusChanged?.Invoke(this, "Not attached to game");
+                return results;
+            }
+
+            StatusChanged?.Invoke(this, "Verifying SDK offsets...");
+
+            // Check GWorld
+            var gworld = ReadGWorld();
+            bool gworldValid = gworld != IntPtr.Zero && gworld.ToInt64() > 0x10000;
+            results["GWorld"] = (gworld, gworldValid);
+            StatusChanged?.Invoke(this, $"  GWorld: {gworld:X} - {(gworldValid ? "VALID" : "INVALID")}");
+
+            // Check GObjects
+            var gobjects = ReadGObjects();
+            bool gobjectsValid = gobjects != IntPtr.Zero && gobjects.ToInt64() > 0x10000;
+            results["GObjects"] = (gobjects, gobjectsValid);
+            StatusChanged?.Invoke(this, $"  GObjects: {gobjects:X} - {(gobjectsValid ? "VALID" : "INVALID")}");
+
+            // Check GNames
+            var gnames = ReadGNames();
+            bool gnamesValid = gnames != IntPtr.Zero && gnames.ToInt64() > 0x10000;
+            results["GNames"] = (gnames, gnamesValid);
+            StatusChanged?.Invoke(this, $"  GNames: {gnames:X} - {(gnamesValid ? "VALID" : "INVALID")}");
+
+            // If GWorld is valid, try to read GameState
+            if (gworldValid)
+            {
+                // UWorld + 0x140 typically points to GameState in UE4
+                long gameStatePtr = ReadInt64(IntPtr.Add(gworld, 0x140));
+                bool gsValid = gameStatePtr > 0x10000;
+                results["GameState"] = (new IntPtr(gameStatePtr), gsValid);
+                StatusChanged?.Invoke(this, $"  GameState: {gameStatePtr:X} - {(gsValid ? "VALID" : "INVALID")}");
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Generate a report of all SDK globals for debugging
+        /// </summary>
+        public string GenerateSDKReport()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== CRAB CHAMPIONS SDK REPORT ===\n");
+
+            if (!IsAttached)
+            {
+                sb.AppendLine("Not attached to game. Attach first.");
+                return sb.ToString();
+            }
+
+            sb.AppendLine($"Game Base Address: {BaseAddress:X}");
+            sb.AppendLine($"Game Version: {GameVersion}");
+            sb.AppendLine();
+
+            sb.AppendLine("=== SDK OFFSETS (from Landan420/CrabChampionsSDKBase) ===");
+            sb.AppendLine($"GWorld offset:    0x{SDKOffsets.GWorld:X8}");
+            sb.AppendLine($"GObjects offset:  0x{SDKOffsets.GObjects:X8}");
+            sb.AppendLine($"GNames offset:    0x{SDKOffsets.GNames:X8}");
+            sb.AppendLine($"ProcessEvent:     0x{SDKOffsets.ProcessEvent:X8}");
+            sb.AppendLine();
+
+            sb.AppendLine("=== RUNTIME VALUES ===");
+            var gworld = ReadGWorld();
+            var gobjects = ReadGObjects();
+            var gnames = ReadGNames();
+
+            sb.AppendLine($"GWorld value:     {gworld:X16}");
+            sb.AppendLine($"GObjects value:   {gobjects:X16}");
+            sb.AppendLine($"GNames value:     {gnames:X16}");
+            sb.AppendLine();
+
+            // Verify and show validation
+            sb.AppendLine("=== VALIDATION ===");
+            var results = VerifySDKOffsets();
+            foreach (var kvp in results)
+            {
+                sb.AppendLine($"{kvp.Key}: {kvp.Value.Address:X} [{(kvp.Value.Valid ? "OK" : "FAIL")}]");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("=== STRUCT OFFSETS (for Cheat Engine) ===");
+            sb.AppendLine("UCrabHC (Health Component):");
+            sb.AppendLine($"  +0x{SDKOffsets.HC_BaseArmorPlates:X4} - BaseArmorPlates (int32)");
+            sb.AppendLine($"  +0x{SDKOffsets.HC_BaseMaxHealth:X4} - BaseMaxHealth (float)");
+            sb.AppendLine($"  +0x{SDKOffsets.HC_HealthInfo:X4} - HealthInfo struct");
+            sb.AppendLine();
+            sb.AppendLine("FCrabHealthInfo (at HealthComponent+0xFC):");
+            sb.AppendLine($"  +0x{SDKOffsets.HI_CurrentArmorPlates:X4} - CurrentArmorPlates (int32)");
+            sb.AppendLine($"  +0x{SDKOffsets.HI_CurrentHealth:X4} - CurrentHealth (float)");
+            sb.AppendLine($"  +0x{SDKOffsets.HI_CurrentMaxHealth:X4} - CurrentMaxHealth (float)");
+            sb.AppendLine();
+            sb.AppendLine("Weapon Object:");
+            sb.AppendLine($"  +0x{SDKOffsets.Weapon_Ammo:X4} - Current Ammo (int32)");
+
+            return sb.ToString();
         }
 
         #endregion
